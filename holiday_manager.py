@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import requests
 from dataclasses import dataclass
 import os
+from time import sleep
 
 clear_term = 'cls||clear'
 
@@ -87,7 +88,7 @@ class HolidayList:
         pass
 
     def getWeather(weekNum):
-        # Convert weekNum to range between two days
+        # Convert weekNum to range between two weeks (something between 1-52)
         # Use Try / Except to catch problems
         # Query API for weather in that week range
         # Format weather information and return weather string.
@@ -104,6 +105,12 @@ class HolidayList:
 
 def get_datetime():
     return(dt.datetime.now())        
+
+def clean_screen():
+    os.system(clear_term)
+    
+def delay(duration):
+    sleep(duration)
         
 def get_templates():
     templates = requests.get(
@@ -113,6 +120,7 @@ def get_templates():
         
 
 def display_menu_template(active_menu, current_day_info, locale_info):
+    clean_screen()
     print(
         templates[1].format(
         current_menu = active_menu, 
@@ -127,7 +135,7 @@ def get_locale():
         data = requests.get(ip_path).json()
         return f'{data["city"]}, {data["region"]}'
     except:
-        return 'Unable to Determine Location - Weather Data may not be accurate'
+        return 'Unable to Determine Location - Weather Data may not be accurate to your locale.'
 
 
     
@@ -155,11 +163,12 @@ def modify_current_date_time():
     day_info = f'{current_date} | {time_of_day}'
     return day_info
 
-os.system(clear_term)
+clean_screen()
 templates = get_templates()
 print(templates[0])
 locale_info = get_locale()
 current_day_info = modify_current_date_time()
+delay(2)
 display_menu_template('Main Menu', current_day_info, locale_info)
 
 
