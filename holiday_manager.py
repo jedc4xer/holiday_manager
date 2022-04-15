@@ -118,7 +118,13 @@ def get_templates():
     ).text.split(",")
     return templates        
         
-
+def display_welcome_template():
+    try:
+        current_user = os.getlogin()
+    except:
+        current_user = ''  
+    print(templates[0].format(current_user = current_user))
+    
 def display_menu_template(active_menu, current_day_info, locale_info):
     clean_screen()
     print(
@@ -165,7 +171,7 @@ def modify_current_date_time():
 
 clean_screen()
 templates = get_templates()
-print(templates[0].format(os.getlogin()))
+display_welcome_template()
 locale_info = get_locale()
 current_day_info = modify_current_date_time()
 delay(2)
