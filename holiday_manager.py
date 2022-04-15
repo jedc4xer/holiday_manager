@@ -165,7 +165,7 @@ def modify_current_date_time():
 
 clean_screen()
 templates = get_templates()
-print(templates[0])
+print(templates[0].format(os.getlogin()))
 locale_info = get_locale()
 current_day_info = modify_current_date_time()
 delay(2)
