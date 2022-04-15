@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 import json
 from bs4 import BeautifulSoup
 import requests
@@ -6,13 +6,7 @@ from dataclasses import dataclass
 import os
 
 clear_term = 'cls||clear'
-os.system(clear_term)
 
-def get_templates():
-    templates = requests.get(
-        'https://raw.githubusercontent.com/jedc4xer/holiday_manager/main/manager_template.txt'
-    ).text.split(",")
-    return templates
 
 # -------------------------------------------
 # Modify the holiday class to 
@@ -23,11 +17,13 @@ def get_templates():
 class Holiday:
       
     def __init__(self,name, date):
-        #Your Code Here        
+        #Your Code Here      
+        pass
     
     def __str__ (self):
         # String output
         # Holiday output when printed.
+        pass
           
             
 # -------------------------------------------
@@ -43,22 +39,27 @@ class HolidayList:
         # Make sure holidayObj is an Holiday Object by checking the type
         # Use innerHolidays.append(holidayObj) to add holiday
         # print to the user that you added a holiday
+        pass
 
     def findHoliday(HolidayName, Date):
         # Find Holiday in innerHolidays
         # Return Holiday
+        pass
 
     def removeHoliday(HolidayName, Date):
         # Find Holiday in innerHolidays by searching the name and date combination.
         # remove the Holiday from innerHolidays
         # inform user you deleted the holiday
+        pass
 
     def read_json(filelocation):
         # Read in things from json file location
         # Use addHoliday function to add holidays to inner list.
+        pass
 
     def save_to_json(filelocation):
         # Write out json file to selected file.
+        pass
         
     def scrapeHolidays():
         # Scrape Holidays from https://www.timeanddate.com/holidays/us/ 
@@ -66,26 +67,31 @@ class HolidayList:
         # Check to see if name and date of holiday is in innerHolidays array
         # Add non-duplicates to innerHolidays
         # Handle any exceptions.     
+        pass
 
     def numHolidays():
         # Return the total number of holidays in innerHolidays
+        pass
     
     def filter_holidays_by_week(year, week_number):
         # Use a Lambda function to filter by week number and save this as holidays, use the filter on innerHolidays
         # Week number is part of the the Datetime object
         # Cast filter results as list
         # return your holidays
+        pass
 
     def displayHolidaysInWeek(holidayList):
         # Use your filter_holidays_by_week to get list of holidays within a week as a parameter
         # Output formated holidays in the week. 
         # * Remember to use the holiday __str__ method.
+        pass
 
     def getWeather(weekNum):
         # Convert weekNum to range between two days
         # Use Try / Except to catch problems
         # Query API for weather in that week range
         # Format weather information and return weather string.
+        pass
 
     def viewCurrentWeek():
         # Use the Datetime Module to look up current week and year
@@ -94,10 +100,73 @@ class HolidayList:
         # Use your displayHolidaysInWeek function to display the holidays in the week
         # Ask user if they want to get the weather
         # If yes, use your getWeather function and display results
+        pass
+
+def get_datetime():
+    return(dt.datetime.now())        
+        
+def get_templates():
+    templates = requests.get(
+        'https://raw.githubusercontent.com/jedc4xer/holiday_manager/main/manager_template.txt'
+    ).text.split(",")
+    return templates        
+        
+
+def display_menu_template(active_menu, current_day_info, locale_info):
+    print(
+        templates[1].format(
+        current_menu = active_menu, 
+        day_info = current_day_info, 
+        locale = locale_info)
+    )
+
+
+def get_locale():
+    try:
+        ip_path = 'http://ipinfo.io/json'
+        data = requests.get(ip_path).json()
+        return f'{data["city"]}, {data["region"]}'
+    except:
+        return 'Unable to Determine Location - Weather Data may not be accurate'
+
+
+    
+def modify_current_date_time():
+    current_dt = get_datetime()
+    current_date = dt.datetime.strftime(current_dt,'%A, %B %d, %Y')
+    current_time = dt.datetime.strftime(current_dt,'%H:%M:%S')
+    if current_time < '06:00':
+        time_of_day = 'Early Morning'
+    elif (current_time >= '06:00' and current_time < '10:00'):
+        time_of_day = 'Morning'
+    elif (current_time >= '10:00' and current_time < '12:00'):
+        time_of_day = 'Late Morning'
+    elif (current_time >= '12:00' and current_time < '15:00'):
+        time_of_day = 'Afternoon'
+    elif (current_time >= '15:00' and current_time < '18:00'):
+        time_of_day = 'Late Afternoon'
+    elif (current_time >= '18:00' and current_time < '21:00'):
+        time_of_day = 'Early Evening'    
+    elif current_time >= '21:00':
+        time_of_day = 'Evening'
+    else:
+        time_of_day = '[error] - Somehow we have ended up on Naboo!'
+        
+    day_info = f'{current_date} | {time_of_day}'
+    return day_info
+
+os.system(clear_term)
+templates = get_templates()
+print(templates[0])
+locale_info = get_locale()
+current_day_info = modify_current_date_time()
+display_menu_template('Main Menu', current_day_info, locale_info)
+
 
 
 
 def main():
+    pass
     # Large Pseudo Code steps
     # -------------------------------------
     # 1. Initialize HolidayList Object
