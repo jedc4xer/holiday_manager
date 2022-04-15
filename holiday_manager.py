@@ -120,7 +120,7 @@ def get_templates():
         
 def display_welcome_template():
     try:
-        current_user = os.getlogin()
+        current_user = pwd.getpwuid(os.getuid())[0]
     except:
         current_user = ''  
     print(templates[0].format(current_user = current_user))
