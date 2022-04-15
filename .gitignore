@@ -1,3 +1,0 @@
-# ignore log files (this is a comment)
-*.ipynb_checkpoints
-.gitignore
