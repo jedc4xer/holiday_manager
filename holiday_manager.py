@@ -9,7 +9,11 @@ clear_term = 'cls||clear'
 os.system(clear_term)
 
 def get_templates():
-    templates = requests.get('')
+    templates = requests.get(
+        'https://raw.githubusercontent.com/jedc4xer/holiday_manager/main/manager_template.txt'
+    ).text.split(",")
+    return templates
+
 # -------------------------------------------
 # Modify the holiday class to 
 # 1. Only accept Datetime objects for date.
