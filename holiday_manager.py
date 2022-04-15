@@ -117,13 +117,6 @@ def get_templates():
         'https://raw.githubusercontent.com/jedc4xer/holiday_manager/main/manager_template.txt'
     ).text.split(",")
     return templates        
-        
-def display_welcome_template():
-    try:
-        current_user = pwd.getpwuid(os.getuid())[0]
-    except:
-        current_user = ''  
-    print(templates[0].format(current_user = current_user))
     
 def display_menu_template(active_menu, current_day_info, locale_info):
     clean_screen()
@@ -141,7 +134,8 @@ def get_locale():
         data = requests.get(ip_path).json()
         return f'{data["city"]}, {data["region"]}'
     except:
-        return 'Unable to Determine Location - Weather Data may not be accurate to your locale.'
+        print('Your location has been estimated and may be inaccurate.')
+        return 'Castries, St Lucia'
 
 
     
@@ -169,16 +163,6 @@ def modify_current_date_time():
     day_info = f'{current_date} | {time_of_day}'
     return day_info
 
-clean_screen()
-templates = get_templates()
-display_welcome_template()
-locale_info = get_locale()
-current_day_info = modify_current_date_time()
-delay(2)
-display_menu_template('Main Menu', current_day_info, locale_info)
-
-
-
 
 def main():
     pass
@@ -193,6 +177,13 @@ def main():
     # 6. Run appropriate method from the HolidayList object depending on what the user input is
     # 7. Ask the User if they would like to Continue, if not, end the while loop, ending the program.  If they do wish to continue, keep the program going. 
 
+clean_screen()
+templates = get_templates()
+print(templates[0])
+locale_info = get_locale()
+current_day_info = modify_current_date_time()
+delay(2)
+display_menu_template('Main Menu', current_day_info, locale_info)
 
 if __name__ == "__main__":
     main();
