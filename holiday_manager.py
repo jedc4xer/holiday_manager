@@ -26,18 +26,114 @@ class Holiday:
         # Holiday output when printed.
         pass
           
-            
+class WeatherReport:
+    """ This class stores the weather information """
+    
+    def __init__(self):
+        self.__locale = 'Castries, St Lucia'
+        self.__country = 'Wish I Were There'
+        self.__current_weather = 'Raining Cats and Dogs'
+        self.__locale, self.__country = self.get_locale()
+        self.__current_weather = self.check_weather('current')
+        #self.__request_type = 'weather'
+        
+    def __post_init__(self):
+        self.__locale, self.__country = self.get_locale()
+        self.__current_weather = self.check_weather('weather')
+        print('Here')
+        
+    def return_data(self):
+        return self.__locale, self.__current_weather
+    
+    def get_date_from_timestamp(self, timestamp):
+        converted = dt.datetime.strftime(
+            dt.datetime.fromtimestamp(timestamp),'%Y-%m-%d'
+        )
+        return converted
+
+    
+    def check_weather(self, request_type):
+        #self.__current_weather = self.get_weather(request_type)
+        try:
+            self.__current_weather = self.get_weather(request_type)
+        except:
+            self.__current_weather = 'Current Weather Unavailable - A Heat Ticket has been Submitted.'
+        return self.__current_weather
+    
+    
+    def get_weather(self, request_type): #, locale, locale_country, request_type):
+        end_point = {'current': "weather", 'daily': "forecast/daily"}
+        weather_url = "https://community-open-weather-map.p.rapidapi.com/" 
+        weather_url += end_point[request_type]
+
+        if self.__country != 'US':
+            local_units = 'metric'
+            temp_unit = '°C'
+        else:
+            local_units = 'imperial'
+            temp_unit = '°F'
+
+        querystring = {"q": self.__locale, "units": local_units}
+
+        headers = {
+            "X-RapidAPI-Host": "community-open-weather-map.p.rapidapi.com",
+            "X-RapidAPI-Key": "5e816765c8msh3e05c78f8f5fad5p1b2217jsn7b6b195a96ba"
+        }
+
+        response = requests.request(
+            "GET", weather_url, headers=headers, params=querystring
+        ).json()
+
+        print('API Called')
+
+        parsed_response = self.parse_weather_response(response, temp_unit, request_type)
+        return parsed_response
+        
+        
+    def get_locale(self):
+        try:
+            ip_path = 'http://ipinfo.io/json'
+            data = requests.get(ip_path).json()
+            return f'{data["city"]}, {data["region"]}', data['country']
+        except:
+            print('Your location has been estimated and may be inaccurate.')
+            return 'Castries, St Lucia', "Wish I Were There"
+        
+    
+    def parse_weather_response(self, response, temp_unit, request_type):
+        if request_type == 'current':
+            current_weather = {
+                'Temperature': str(response['main']['temp']) + temp_unit,
+                'Feels Like': str(response['main']['feels_like']) + temp_unit,
+                'Humidity': "{:}%".format(response['main']['humidity']),
+                'Wind': response['wind']['speed']
+            }
+
+            current_weather_string = " | ".join(
+                key + ": " + str(current_weather[key]) for key in current_weather.keys()
+            )
+            return current_weather_string
+        else:
+            daily_weather = response['list']
+            daily_data = {}
+            for day in daily_weather:
+                date = self.get_date_from_timestamp(day['dt'])
+                high = str(day['temp']['max']) + temp_unit
+                fore = day['weather'][0]['main']
+                clouds = "{:}%".format(day['clouds'])
+                daily_data[date] = {'High': high, 'Forecast': fore, 'Cloud Cover': clouds}
+            return daily_data
+    
+    
 # -------------------------------------------
 # The HolidayList class acts as a wrapper and container
 # For the list of holidays
 # Each method has pseudo-code instructions
 # --------------------------------------------
 class HolidayList:
-    def __init__(self, locale, country):
+    def __init__(self):
         self.innerHolidays = []
-        self.locale = locale
-        self.country = country
-        print(self.locale)
+    
    
     def addHoliday(holidayObj):
         # Make sure holidayObj is an Holiday Object by checking the type
@@ -90,35 +186,7 @@ class HolidayList:
         # * Remember to use the holiday __str__ method.
         pass
     
-#     def get_date_from_timestamp(self, timestamp):
-#         converted = dt.datetime.strftime(
-#             dt.datetime.fromtimestamp(timestamp),'%Y-%m-%d'
-#         )
-#         return converted
-    
-#     def parse_weather_response(self, response, temp_unit, request_type):
-#         if request_type == 'current':
-#             current_weather = {
-#                 'Current Temperature': response['main']['temp'],
-#                 'Feels Like': response['main']['feels_like'],
-#                 'Humidity': response['main']['humidity'],
-#                 'Wind': response['wind']['speed']
-#             }
 
-#             current_weather_string = " | ".join(
-#                 key + ": " + str(current_weather[key]) + temp_unit for key in current_weather.keys()
-#             )
-#             return current_weather_string
-#         else:
-#             daily_weather = response['list']
-#             daily_data = {}
-#             for day in daily_weather:
-#                 date = self.get_date_from_timestamp(day['dt'])
-#                 high = str(day['temp']['max']) + temp_unit
-#                 fore = day['weather'][0]['main']
-#                 clouds = "{:}%".format(day['clouds'])
-#                 daily_data[date] = {'High': high, 'Forecast': fore, 'Cloud Cover': clouds}
-#             return daily_data
     
 
     # def getWeather(weekNum):
@@ -128,40 +196,7 @@ class HolidayList:
     #     # Format weather information and return weather string.
     #     pass
     
-#     def get_weather(self, locale, locale_country, request_type):
-#         end_point = {'current': "weather", 'daily': "forecast/daily"}
-#         weather_url = "https://community-open-weather-map.p.rapidapi.com/" 
-#         weather_url += end_point[request_type]
 
-#         if locale_country != 'US':
-#             local_units = 'metric'
-#             temp_unit = '°C'
-#         else:
-#             local_units = 'imperial'
-#             temp_unit = '°F'
-
-#         querystring = {"q": locale, "units": local_units}
-
-#         headers = {
-#             "X-RapidAPI-Host": "community-open-weather-map.p.rapidapi.com",
-#             "X-RapidAPI-Key": "5e816765c8msh3e05c78f8f5fad5p1b2217jsn7b6b195a96ba"
-#         }
-
-#         response = requests.request(
-#             "GET", weather_url, headers=headers, params=querystring
-#         ).json()
-        
-#         print('API Called')
-
-#         parsed_response = self.parse_weather_response(response, temp_unit, request_type)
-#         return parsed_response
-    
-#     def check_weather(self):
-#         try:
-#             current_weather = self.get_weather(locale, locale_country, 'daily')
-#         except:
-#             current_weather = 'Current Weather Unavailable - A Heat Ticket has been Submitted.'
-#         print(current_weather)
 
     def viewCurrentWeek():
         # Use the Datetime Module to look up current week and year
@@ -187,25 +222,16 @@ def get_templates():
     ).text.split(",")
     return templates        
     
-def display_menu_template(active_menu, current_day_info, locale_info):
+def display_menu_template(active_menu, current_weather, current_day_info, locale_info):
     clean_screen()
     print(
         templates[1].format(
         current_menu = active_menu, 
+        current_weather = current_weather,
         day_info = current_day_info, 
-        locale = locale_info)
+        locale = locale_info
+        )
     )
-
-
-def get_locale():
-    try:
-        ip_path = 'http://ipinfo.io/json'
-        data = requests.get(ip_path).json()
-        return f'{data["city"]}, {data["region"]}', data['country']
-    except:
-        print('Your location has been estimated and may be inaccurate.')
-        return 'Castries, St Lucia', "Wish I Were There"
-
 
     
 def modify_current_date_time():
@@ -234,11 +260,13 @@ def modify_current_date_time():
 
 
 def main():
-    locale_info, country = get_locale()
+    #locale_info, country = get_locale()
     current_day_info = modify_current_date_time()
+    CurrentWeather = WeatherReport()
+    locale_info, current_weather = CurrentWeather.return_data()
     delay(2)
-    display_menu_template('Main Menu', current_day_info, locale_info)
-    BoontaEve = HolidayList(locale_info, country)
+    display_menu_template('Main Menu', current_weather, current_day_info, locale_info)
+    #BoontaEve = HolidayList(locale_info, country)
     # Large Pseudo Code steps
     # -------------------------------------
     # 1. Initialize HolidayList Object
