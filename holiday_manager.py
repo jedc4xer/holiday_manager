@@ -33,14 +33,13 @@ class WeatherReport:
         self.__locale = 'Castries, St Lucia'
         self.__country = 'Wish I Were There'
         self.__current_weather = 'Raining Cats and Dogs'
-        self.__locale, self.__country = self.get_locale()
-        self.__current_weather = self.check_weather('current')
-        #self.__request_type = 'weather'
+        self.__country = self.get_locale()
+        #self.__current_weather = self.check_weather('current')
         
-    def __post_init__(self):
-        self.__locale, self.__country = self.get_locale()
-        self.__current_weather = self.check_weather('weather')
-        print('Here')
+    # def __post_init__(self):
+    #     self.__locale, self.__country = self.get_locale()
+    #     self.__current_weather = self.check_weather('weather')
+    #     print('Here')
         
     def return_data(self):
         return self.__locale, self.__current_weather
@@ -258,14 +257,50 @@ def modify_current_date_time():
     day_info = f'{current_date} | {time_of_day}'
     return day_info
 
+def check_input(input_string, requirements, limits):
+    if requirements == 'int':
+        if (input_string.isnumeric() and int(input_string) in range(1, limits + 1)):
+            return True
 
+    return False
+    
+    
 def main():
     #locale_info, country = get_locale()
     current_day_info = modify_current_date_time()
     CurrentWeather = WeatherReport()
     locale_info, current_weather = CurrentWeather.return_data()
     delay(2)
-    display_menu_template('Main Menu', current_weather, current_day_info, locale_info)
+    
+    outer_passed = False
+    while not outer_passed:
+        passed = False
+        while not passed:
+            display_menu_template('Main Menu', current_weather, current_day_info, locale_info)
+            print(templates[2])
+            main_menu_choice = input('  Please Choose an Option >> ')
+            passed = check_input(main_menu_choice, 'int', 6)
+        main_menu_choice = int(main_menu_choice)
+        if main_menu_choice == 1:
+            pass
+        elif main_menu_choice == 2:
+            pass
+        elif main_menu_choice == 3:
+            pass
+        elif main_menu_choice == 4:
+            pass
+        elif main_menu_choice == 5:
+            print_string = """
+              I heavily debated linking the "Wheel of Fortune" game here, 
+              but logic and paranoia won out, so instead your holiday will
+              consist of a suggestion to travel somewhere relaxing.            
+            """
+            print(print_string.center(78," "))
+        elif main_menu_choice == 6:
+            # go to exit function
+            pass
+        break
+        
     #BoontaEve = HolidayList(locale_info, country)
     # Large Pseudo Code steps
     # -------------------------------------
