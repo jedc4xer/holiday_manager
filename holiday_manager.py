@@ -33,8 +33,11 @@ class Holiday:
 # Each method has pseudo-code instructions
 # --------------------------------------------
 class HolidayList:
-    def __init__(self):
+    def __init__(self, locale, country):
         self.innerHolidays = []
+        self.locale = locale
+        self.country = country
+        print(self.locale)
    
     def addHoliday(holidayObj):
         # Make sure holidayObj is an Holiday Object by checking the type
@@ -86,13 +89,79 @@ class HolidayList:
         # Output formated holidays in the week. 
         # * Remember to use the holiday __str__ method.
         pass
+    
+#     def get_date_from_timestamp(self, timestamp):
+#         converted = dt.datetime.strftime(
+#             dt.datetime.fromtimestamp(timestamp),'%Y-%m-%d'
+#         )
+#         return converted
+    
+#     def parse_weather_response(self, response, temp_unit, request_type):
+#         if request_type == 'current':
+#             current_weather = {
+#                 'Current Temperature': response['main']['temp'],
+#                 'Feels Like': response['main']['feels_like'],
+#                 'Humidity': response['main']['humidity'],
+#                 'Wind': response['wind']['speed']
+#             }
 
-    def getWeather(weekNum):
-        # Convert weekNum to range between two weeks (something between 1-52)
-        # Use Try / Except to catch problems
-        # Query API for weather in that week range
-        # Format weather information and return weather string.
-        pass
+#             current_weather_string = " | ".join(
+#                 key + ": " + str(current_weather[key]) + temp_unit for key in current_weather.keys()
+#             )
+#             return current_weather_string
+#         else:
+#             daily_weather = response['list']
+#             daily_data = {}
+#             for day in daily_weather:
+#                 date = self.get_date_from_timestamp(day['dt'])
+#                 high = str(day['temp']['max']) + temp_unit
+#                 fore = day['weather'][0]['main']
+#                 clouds = "{:}%".format(day['clouds'])
+#                 daily_data[date] = {'High': high, 'Forecast': fore, 'Cloud Cover': clouds}
+#             return daily_data
+    
+
+    # def getWeather(weekNum):
+    #     # Convert weekNum to range between two weeks (something between 1-52)
+    #     # Use Try / Except to catch problems
+    #     # Query API for weather in that week range
+    #     # Format weather information and return weather string.
+    #     pass
+    
+#     def get_weather(self, locale, locale_country, request_type):
+#         end_point = {'current': "weather", 'daily': "forecast/daily"}
+#         weather_url = "https://community-open-weather-map.p.rapidapi.com/" 
+#         weather_url += end_point[request_type]
+
+#         if locale_country != 'US':
+#             local_units = 'metric'
+#             temp_unit = '°C'
+#         else:
+#             local_units = 'imperial'
+#             temp_unit = '°F'
+
+#         querystring = {"q": locale, "units": local_units}
+
+#         headers = {
+#             "X-RapidAPI-Host": "community-open-weather-map.p.rapidapi.com",
+#             "X-RapidAPI-Key": "5e816765c8msh3e05c78f8f5fad5p1b2217jsn7b6b195a96ba"
+#         }
+
+#         response = requests.request(
+#             "GET", weather_url, headers=headers, params=querystring
+#         ).json()
+        
+#         print('API Called')
+
+#         parsed_response = self.parse_weather_response(response, temp_unit, request_type)
+#         return parsed_response
+    
+#     def check_weather(self):
+#         try:
+#             current_weather = self.get_weather(locale, locale_country, 'daily')
+#         except:
+#             current_weather = 'Current Weather Unavailable - A Heat Ticket has been Submitted.'
+#         print(current_weather)
 
     def viewCurrentWeek():
         # Use the Datetime Module to look up current week and year
@@ -132,10 +201,10 @@ def get_locale():
     try:
         ip_path = 'http://ipinfo.io/json'
         data = requests.get(ip_path).json()
-        return f'{data["city"]}, {data["region"]}'
+        return f'{data["city"]}, {data["region"]}', data['country']
     except:
         print('Your location has been estimated and may be inaccurate.')
-        return 'Castries, St Lucia'
+        return 'Castries, St Lucia', "Wish I Were There"
 
 
     
@@ -165,7 +234,11 @@ def modify_current_date_time():
 
 
 def main():
-    pass
+    locale_info, country = get_locale()
+    current_day_info = modify_current_date_time()
+    delay(2)
+    display_menu_template('Main Menu', current_day_info, locale_info)
+    BoontaEve = HolidayList(locale_info, country)
     # Large Pseudo Code steps
     # -------------------------------------
     # 1. Initialize HolidayList Object
@@ -180,15 +253,13 @@ def main():
 clean_screen()
 templates = get_templates()
 print(templates[0])
-locale_info = get_locale()
-current_day_info = modify_current_date_time()
-delay(2)
-display_menu_template('Main Menu', current_day_info, locale_info)
+
 
 if __name__ == "__main__":
     main();
 
 
+    
 # Additional Hints:
 # ---------------------------------------------
 # You may need additional helper functions both in and out of the classes, add functions as you need to.
@@ -204,6 +275,10 @@ if __name__ == "__main__":
 # and substitute the placeholders 
 # for example: filetxt.format(fname = "John", age = 36)
 # This will make your code far more readable, by seperating text from code.
+
+
+
+
 
 
 
