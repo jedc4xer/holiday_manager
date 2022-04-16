@@ -74,10 +74,11 @@ class WeatherReport:
 
         querystring = {"q": self.__locale, "units": local_units}
 
-        headers = {
-            "X-RapidAPI-Host": "community-open-weather-map.p.rapidapi.com",
-            "X-RapidAPI-Key": "5e816765c8msh3e05c78f8f5fad5p1b2217jsn7b6b195a96ba"
-        }
+        # Uncomment when ready for publish
+        # headers = {
+        #     "X-RapidAPI-Host": "community-open-weather-map.p.rapidapi.com",
+        #     "X-RapidAPI-Key": 
+        # }
 
         response = requests.request(
             "GET", weather_url, headers=headers, params=querystring
