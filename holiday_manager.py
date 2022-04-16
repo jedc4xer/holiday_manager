@@ -135,8 +135,9 @@ class WeatherReport:
 # Each method has pseudo-code instructions
 # --------------------------------------------
 class HolidayList:
-    def __init__(self):
+    def __init__(self, errors):
         #self.__innerHolidays = []
+        self.__errors = errors
         self.__inner_holidays = {}
         self.__pre_loaded_path = 'pre_loaded_holidays.json'
         self.__pre_loaded_holidays = self.read_json()
@@ -147,10 +148,9 @@ class HolidayList:
         # Make sure holidayObj is an Holiday Object by checking the type
         # Use innerHolidays.append(holidayObj) to add holiday
         # print to the user that you added a holiday
-        if not isinstance(holiday_object, Holiday):
-            print("""  
-              
-              """)
+        if isinstance(holiday_object, Holiday):
+            print(self.__errors[0])
+            return
         holidate = holiday_object.date
         if holidate in self.__inner_holidays:
             self.__inner_holidays[holidate].append(holiday_object)
@@ -280,10 +280,10 @@ def get_templates():
     return templates        
 
 def get_errors():
-    templates = requests.get(
-        'https://raw.githubusercontent.com/jedc4xer/holiday_manager/main/manager_template.txt'
+    errors = requests.get(
+        'https://raw.githubusercontent.com/jedc4xer/holiday_manager/main/user_communication.txt'
     ).text.split(",")
-    return templates        
+    return errors      
     
 def display_menu_template(active_menu, current_weather, current_day_info, locale_info):
     clean_screen()
@@ -333,10 +333,11 @@ def check_input(input_string, requirements, limits):
     
 def main():
     #locale_info, country = get_locale()
+    errors = get_errors()
     current_day_info = modify_current_date_time()
     CurrentWeather = WeatherReport()
     locale_info, current_weather = CurrentWeather.return_data()
-    BoontaEve = HolidayList()
+    BoontaEve = HolidayList(errors)
     delay(2)
     
     outer_passed = False
@@ -373,7 +374,6 @@ def main():
 
 clean_screen()
 templates = get_templates()
-errors = get_errors()
 print(templates[0])
 
 
