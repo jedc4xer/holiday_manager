@@ -19,5 +19,4 @@
     2. Remove a Holiday
     3. Save Holiday List
     4. View Holidays
-    5. Take a Holiday
-    6. Exit
+    5. Exit

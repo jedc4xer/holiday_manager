@@ -1,13 +1,16 @@
-import datetime as dt
 import json
-from bs4 import BeautifulSoup
 import requests
-from dataclasses import dataclass
 import os
+
+import datetime as dt
+
+from bs4 import BeautifulSoup
+from dataclasses import dataclass
 from time import sleep
 
 clear_term = 'cls||clear'
 
+## May add an exit note that makes a suggestion based on the weather
 
 # -------------------------------------------
 # Modify the holiday class to 
@@ -15,16 +18,17 @@ clear_term = 'cls||clear'
 # 2. You may need to add additional functions
 # 3. You may drop the init if you are using @dataclasses
 # --------------------------------------------
+
+@dataclass
 class Holiday:
-      
-    def __init__(self,name, date):
-        #Your Code Here      
-        pass
+    """ Holiday Class """
+    name: str
+    date: str
+    category: str
     
     def __str__ (self):
-        # String output
-        # Holiday output when printed.
-        pass
+        str_output = f'{name} | {category} | {date}'
+        return str_output
           
 class WeatherReport:
     """ This class stores the weather information """
@@ -132,14 +136,28 @@ class WeatherReport:
 # --------------------------------------------
 class HolidayList:
     def __init__(self):
-        self.innerHolidays = []
-    
-   
-    def addHoliday(holidayObj):
+        #self.__innerHolidays = []
+        self.__inner_holidays = {}
+        self.__pre_loaded_path = 'pre_loaded_holidays.json'
+        self.__pre_loaded_holidays = self.read_json()
+        print(self.__inner_holidays)
+        delay(3)
+        
+    def add_holiday(self, holiday_object):
         # Make sure holidayObj is an Holiday Object by checking the type
         # Use innerHolidays.append(holidayObj) to add holiday
         # print to the user that you added a holiday
-        pass
+        if not isinstance(holiday_object, Holiday):
+            print("""  
+              
+              """)
+        holidate = holiday_object.date
+        if holidate in self.__inner_holidays:
+            self.__inner_holidays[holidate].append(holiday_object)
+            print("Added holiday to existing date.")
+        else:
+            self.__inner_holidays[holidate] = [holiday_object]
+            print("Added holiday to a new date.")
 
     def findHoliday(HolidayName, Date):
         # Find Holiday in innerHolidays
@@ -151,11 +169,50 @@ class HolidayList:
         # remove the Holiday from innerHolidays
         # inform user you deleted the holiday
         pass
-
-    def read_json(filelocation):
+    
+    def convert_new_holidays(self, provided_holidays):
+        for new_holiday in provided_holidays:
+            if 'category' not in new_holiday:
+                category = 'Custom Holiday'
+            else:
+                category = new_holiday['category']
+                
+            holiday_object = Holiday(
+                new_holiday['name'], 
+                new_holiday['date'], 
+                category
+            )
+            
+            self.add_holiday(holiday_object)
+        
+    def read_json(self):
         # Read in things from json file location
         # Use addHoliday function to add holidays to inner list.
-        pass
+        
+        # Jeds Steps
+        # 1. Check for file
+        # 2. load existing
+        # 3. convert existing to holiday objects
+        # 4. store holiday objects in holiday dictionary
+        # 5. return to main
+        
+        try:
+            if 'managed_holidays.json' in os.listdir():
+                print('Loading Managed Holidays...'.center(78, " "))
+                file = open('managed_holidays.json')
+                managed_holidays = json.load(file)
+                return manged_holidays
+            else:
+                print('New Environment Detected'.center(78, " "))
+                print('Gathering Preloaded Holidays'.center(78, " "))
+                
+        except:
+            print('New Environment Detected'.center(78, " "))
+            print('Gathering Preloaded Holidays'.center(78, " "))
+        
+        file = open(self.__pre_loaded_path)
+        provided_holidays = json.load(file)['holidays']     
+        self.convert_new_holidays(provided_holidays)
 
     def save_to_json(filelocation):
         # Write out json file to selected file.
@@ -221,6 +278,12 @@ def get_templates():
         'https://raw.githubusercontent.com/jedc4xer/holiday_manager/main/manager_template.txt'
     ).text.split(",")
     return templates        
+
+def get_errors():
+    templates = requests.get(
+        'https://raw.githubusercontent.com/jedc4xer/holiday_manager/main/manager_template.txt'
+    ).text.split(",")
+    return templates        
     
 def display_menu_template(active_menu, current_weather, current_day_info, locale_info):
     clean_screen()
@@ -259,10 +322,12 @@ def modify_current_date_time():
     return day_info
 
 def check_input(input_string, requirements, limits):
-    if requirements == 'int':
+    if requirements == 'number':
         if (input_string.isnumeric() and int(input_string) in range(1, limits + 1)):
             return True
 
+    print(f'  {input_string} is not a valid {requirements}. Please try again.')
+    delay(1.5)
     return False
     
     
@@ -271,6 +336,7 @@ def main():
     current_day_info = modify_current_date_time()
     CurrentWeather = WeatherReport()
     locale_info, current_weather = CurrentWeather.return_data()
+    BoontaEve = HolidayList()
     delay(2)
     
     outer_passed = False
@@ -280,7 +346,7 @@ def main():
             display_menu_template('Main Menu', current_weather, current_day_info, locale_info)
             print(templates[2])
             main_menu_choice = input('  Please Choose an Option >> ')
-            passed = check_input(main_menu_choice, 'int', 6)
+            passed = check_input(main_menu_choice, 'number', 5)
         main_menu_choice = int(main_menu_choice)
         if main_menu_choice == 1:
             pass
@@ -291,18 +357,9 @@ def main():
         elif main_menu_choice == 4:
             pass
         elif main_menu_choice == 5:
-            print_string = """
-              I heavily debated linking the "Wheel of Fortune" game here, 
-              but logic and paranoia won out, so instead your holiday will
-              consist of a suggestion to travel somewhere relaxing.            
-            """
-            print(print_string.center(78," "))
-        elif main_menu_choice == 6:
-            # go to exit function
-            pass
-        break
+            return
         
-    #BoontaEve = HolidayList(locale_info, country)
+    
     # Large Pseudo Code steps
     # -------------------------------------
     # 1. Initialize HolidayList Object
@@ -316,11 +373,23 @@ def main():
 
 clean_screen()
 templates = get_templates()
+errors = get_errors()
 print(templates[0])
 
 
 if __name__ == "__main__":
-    main();
+    main()
+    
+    # Closing Sequence
+    display_menu_template('Closing','','','')
+    print("\n" * 2)
+    print('Closing the Manager'.center(78," "))
+    delay(1.5)
+    clean_screen()
+    print("\n" * 2)
+    print('Goodbye!!'.center(78," "))
+    print('May the fourth be with you.'.center(78," "))
+    print("\n" * 3);
 
 
     
