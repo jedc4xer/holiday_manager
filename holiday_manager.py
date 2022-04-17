@@ -32,7 +32,8 @@ class Holiday:
     category: str
 
     def __str__(self):
-        str_output = f"{name} | {category} | {date}"
+        categories = ", ".join(self.category)
+        str_output = f"  {self.name} | {categories}"
         return str_output
 
 
@@ -340,6 +341,8 @@ class HolidayList:
         date_string = f"{year}-V{int(week_number)}-1"
         start_date = dt.datetime.strptime(date_string, "%G-V%V-%w").date()
         end_date = start_date + dt.timedelta(days=6.9)
+        #print(f'Start Date Calculated As: {start_date}\nEnd Date As: {end_date}')
+        #time.sleep(10)
         return start_date, end_date
 
     def filter_holidays_by_week(self, date_range):
@@ -348,26 +351,56 @@ class HolidayList:
         The reason for my decision, is that I have already matched a week number to a 
         date range through user input, and I have the data stored in a dictionary that 
         is keyed by date. Using a lambda to match on week number 'could' return inaccurate
-        results in week 1 of some years. """
-        # for item in self.__inner_holidays:
-        #     print(str(item))
-        #     raise SystemExit
-        print(type(date_range[0]), type(date_range[1]))
-        filtered_by_range = filter(
-            lambda item: (self.__inner_holidays[item] == '2020-01-13'), self.__inner_holidays.items())
-        #print(list(filtered_by_range))
-        print(dict(filtered_by_range))
-        delay(5)
+        or incomplete results in week 1 of some years. For example, If I enter Week 1 because
+        I want to know about New Years Day or a holiday in week 1, it might only match with 
+        dates several days into the new year."""
+
+        starting_date = dt.datetime.strptime(date_range[0], '%Y-%m-%d')
+        ending_date = dt.datetime.strptime(date_range[1], '%Y-%m-%d')
+
+        date_list = [
+            self.convert_dt(starting_date + dt.timedelta(days = i), 'string')
+            for i in range((ending_date-starting_date).days + 1)
+        ]
+
+        # I'm using a loop and lambda filter here because I spent way too much time trying to 
+        # figure out how to set the filter up correctly.
+        # I know this is an inefficient use of a lambda filter, but I am not going to rewrite
+        # my data structure this late in the game.
+        
+        days = []
+        for day in date_list:
+            filtered_by_range = filter(
+                lambda key: day in key, self.__inner_holidays.items()
+            )
+            days += list(filtered_by_range)
+        return days, date_list
         # Use a Lambda function to filter by week number and save this as holidays, use the filter on innerHolidays
         # Week number is part of the the Datetime object
         # Cast filter results as list
         # return your holidays
 
-    def displayHolidaysInWeek(holidayList):
+    def display_week_holidays(self, date_list):
+        holiday_subset, dates = self.filter_holidays_by_week(date_list)
+        print("")
+        for date in dates:
+            weekday = dt.datetime.strftime(self.convert_dt(date, 'object'), '%A')
+            print(f'  {weekday}, {date}')
+            cntr = 0
+            for celeb in holiday_subset:
+                if celeb[0] == date:
+                    cntr += 1
+                    for holiday in celeb[1]:
+                        print(holiday)
+            print(" " if cntr != 0 else '  * No Holidays * \n')
+            
+      
+            
+        if input(" Continue? >> ") == '':
+            print("moving on")
         # Use your filter_holidays_by_week to get list of holidays within a week as a parameter
         # Output formated holidays in the week.
         # * Remember to use the holiday __str__ method.
-        pass
 
     # def getWeather(weekNum):
     #     # Convert weekNum to range between two weeks (something between 1-52)
@@ -396,8 +429,14 @@ class HolidayList:
         }
         return month_dict[text_month]
 
-    def convert_dt(self, date_time_object):
-        return dt.datetime.strftime(date_time_object, "%G-%m-%d")
+    # def convert_dt(self, date_time_object):
+    #     return dt.datetime.strftime(date_time_object, "%G-%m-%d")
+    
+    def convert_dt(self, date_time, date_type):
+        if date_type == 'string':
+            return dt.datetime.strftime(date_time, "%Y-%m-%d")
+        else:
+            return dt.datetime.strptime(date_time, '%Y-%m-%d').date()
 
     def get_week_nums(self, year, month):
         """ This function converts year/month -> list of week numbers. """
@@ -447,11 +486,11 @@ class HolidayList:
         # Ask user if they want to get the weather
         # If yes, use your getWeather function and display results
         pass
-    
+            
     def holiday_view_builder(self):
         """ This heavy function gathers user input and displays the requested view. """
         print('  Leave blank for current week. "exit" to close')
-        which_year = input("  Which year would you like to view? >> ")
+        which_year = input("  Which year would you like to view?  (i.e. 2020) >> ")
         if which_year.lower() == "exit":
             return True
 
@@ -476,7 +515,7 @@ class HolidayList:
                             )
                             week_choice = list(
                                 map(
-                                    lambda x: convert_dt(x),
+                                    lambda x: convert_dt(x, 'string'),
                                     [week_choice[0], week_choice[1]],
                                 )
                             )
@@ -502,8 +541,9 @@ class HolidayList:
                                 dates = self.match_week_to_date(week, which_year - 1)
                             else:
                                 dates = self.match_week_to_date(week, which_year)
+
                             week_dict[str(week)] = list(
-                                map(lambda x: self.convert_dt(x), [dates[0], dates[1]])
+                                map(lambda x: self.convert_dt(x, 'string'), [dates[0], dates[1]])
                             )
 
                             dates = " to ".join(
@@ -518,18 +558,12 @@ class HolidayList:
                             return week_dict[week_choice]
                         else:
                             if '"' in week_choice:
-                                print(
-                                    '  Hmmm... Try leaving out the " " marks. That was just an example. '
-                                )
+                                print(errors[1])              
                                 delay(2)
                             else:
-                                print(
-                                    "  Hmmm... That just doesn't compute.\n  Starting Infinite Loop..."
-                                )
+                                print(errors[2])
                                 delay(2)
-                                print(
-                                    "  Wheeew, done. That was exhausting. Good thing you got a fancy processor."
-                                )
+                                print(errors[3])
                                 delay(2)
                         # Fall-through returns to Main Menu
                         
@@ -565,6 +599,17 @@ def get_errors():
 
 # .............   MENU FUNCTIONS  .............#
 
+def save_menu():
+    if input("  Do you want to save? (yes) >> ").lower() in ['y','yes','yeah','yea']:
+        try:
+            BoontaEve.save_holidays()
+            print('  Save Succeeded')
+        except:
+            print('  Save Failed')
+    else:
+        print('  Canceled without saving... Returning to main menu.')
+    delay(2)
+                    
 
 def display_menu_template(active_menu, arg_list):
     clean_screen()
@@ -593,6 +638,7 @@ def display_menu_template(active_menu, arg_list):
 
 def delay(duration):
     time.sleep(duration)
+    #print("Not delaying during testing")
 
 
 def clean_screen():
@@ -658,7 +704,7 @@ def main():
     if holiday_cnt < 100:
         display_menu_template("Starting", main_args)
         BoontaEve.scrape_manager()
-        BoontaEve.save_holidays()
+        
         holiday_cnt, unique = BoontaEve.num_holidays()
         count_disp = prettify_holiday_count(holiday_cnt, unique)
         main_args = [current_weather, current_day_info, locale_info, count_disp]
@@ -677,15 +723,17 @@ def main():
         elif main_menu_choice == 2:
             pass
         elif main_menu_choice == 3:
-            pass
+            display_menu_template("Save Menu", main_args)
+            save_menu()
         elif main_menu_choice == 4:
             passed = False
             while not passed:
                 display_menu_template("Holiday Viewer", main_args)
                 passed = BoontaEve.holiday_view_builder()
             if type(passed) == list:
-                print(passed)
-                BoontaEve.filter_holidays_by_week(passed)
+                BoontaEve.display_week_holidays(passed)
+                
+                
             else:
                 print(passed, 'Not a list')
 
