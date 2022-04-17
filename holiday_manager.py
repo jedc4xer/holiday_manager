@@ -385,12 +385,14 @@ def display_menu_template(active_menu, arg_list):
     current_weather = arg_list[0]
     current_day_info = arg_list[1]
     locale_info = arg_list[2]
+    holiday_cnt = arg_list[3]
     print(
         templates[1].format(
         current_menu = active_menu, 
         current_weather = current_weather,
         day_info = current_day_info, 
-        locale = locale_info
+        locale = locale_info,
+        holiday_cnt = holiday_cnt
         )
     )
 
@@ -549,7 +551,7 @@ def main():
         passed = False
         while not passed:
             display_menu_template('Main Menu', main_args)
-            print(templates[2])
+            print(templates[3])
             main_menu_choice = input('  Please Choose an Option >> ')
             passed = check_input(main_menu_choice, 'number', 5)
         main_menu_choice = int(main_menu_choice)
@@ -590,7 +592,9 @@ if __name__ == "__main__":
     main()
     
     # Closing Sequence
-    display_menu_template('Closing',['','',''])
+    #display_menu_template('Closing',['','',''])
+    clean_screen()
+    print(templates[2])
     print("\n" * 2)
     print('Closing the Manager'.center(78," "))
     delay(1.5)
