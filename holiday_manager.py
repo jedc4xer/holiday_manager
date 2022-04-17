@@ -148,7 +148,6 @@ class HolidayList:
         # self.__innerHolidays = []
         self.__errors = errors
         self.__inner_holidays = {}
-        self.__pre_loaded_path = "pre_loaded_holidays.json"
         self.__pre_loaded_holidays = self.read_json()
 
     def add_holiday(self, holiday_object):
@@ -184,11 +183,11 @@ class HolidayList:
         for new_holiday in provided_holidays:
             if "category" not in new_holiday:
                 category = ["Custom Holiday"]
+                holiday_object = Holiday(new_holiday["name"], new_holiday["date"], category)
             else:
                 category = new_holiday["category"]
-
-            holiday_object = Holiday(new_holiday["name"], new_holiday["date"], category)
-
+                holiday_object = Holiday(new_holiday["name"], new_holiday["date"], new_holiday['category'])
+            
             self.add_holiday(holiday_object)
 
     def read_json(self):
@@ -198,33 +197,52 @@ class HolidayList:
         """
         try:
             if "managed_holidays.json" in os.listdir():
+                print('Welcome Back!!'.center(78," "))
                 print("Loading Managed Holidays...".center(78, " "), "\n")
                 file = open("managed_holidays.json")
-                managed_holidays = json.load(file)
-                return manged_holidays
+                managed_holidays = json.load(file)["holidays"]
+                self.convert_new_holidays(managed_holidays)
+                delay(3)
             else:
                 print("New Environment Detected".center(78, " "), "\n")
                 print("Gathering Preloaded Holidays".center(78, " "), "\n")
-
+                file = open("pre_loaded_holidays.json")
+                managed_holidays = json.load(file)["holidays"]
+                self.convert_new_holidays(managed_holidays)
         except:
-            print("New Environment Detected".center(78, " "), "\n")
+            print("System Environment Inconsistency".center(78, " "), "\n")
             print("Gathering Preloaded Holidays".center(78, " "), "\n")
-
-        file = open(self.__pre_loaded_path)
-        provided_holidays = json.load(file)["holidays"]
-        self.convert_new_holidays(provided_holidays)
+            delay(2)
+            file = open("pre_loaded_holidays.json")
+            provided_holidays = json.load(file)["holidays"]
+            self.convert_new_holidays(provided_holidays)
 
     def save_to_json(filelocation):
         # Write out json file to selected file.
         pass
     
     #This saves the scrape to file
-#     def save_holidays(self):
-#         combined_json = json.dumps(self.__inner_holidays)
+    def save_holidays(self):
+        combined = {"holidays": []}
+        for year in self.__inner_holidays:
+            for holiday in self.__inner_holidays[year]:
+                holiday_to_save = {
+                    'name': holiday.name,
+                    'date': holiday.date,
+                    'category': holiday.category
+                }
+                combined["holidays"].append(holiday_to_save)
+        print(
+            "  Storing data... please wait...".center(78, " "), "\n"
+        )
+        try:
+            combined_json = json.dumps(combined)
 
-#         with open('scraped_holidays.json', 'w') as file:
-#             file.write(combined_json)
-#             file.close()
+            with open('managed_holidays.json', 'w') as file:
+                file.write(combined_json)
+                file.close()
+        except:
+            print('  Hmmm.... maybe I need a stepladder. I could not reach the shelf!.')
 
 
     def standard_date(self, date, year):
@@ -242,7 +260,7 @@ class HolidayList:
         for year in target_range:
             scraped_holidays = self.scrape_holidays(year)
             all_scraped[year] = scraped_holidays
-            print(f"{year}: {len(scraped_holidays)}")
+            print(f"  {year}: {len(scraped_holidays)}")
             delay(2)
 
         combined = {"holidays": []}
@@ -318,18 +336,32 @@ class HolidayList:
         unique_holidays = len(set(holiday_names))
         return total_holidays, unique_holidays
 
-    def match_week_to_date(self, week_num, year):
-        date_string = f"{year}-V{int(week_num)}-1"
+    def match_week_to_date(self, week_number, year):
+        date_string = f"{year}-V{int(week_number)}-1"
         start_date = dt.datetime.strptime(date_string, "%G-V%V-%w").date()
         end_date = start_date + dt.timedelta(days=6.9)
         return start_date, end_date
 
-    def filter_holidays_by_week(year, week_number):
+    def filter_holidays_by_week(self, date_range):
+        """ 
+        While this function is expected to match by week number, I am matching on date.
+        The reason for my decision, is that I have already matched a week number to a 
+        date range through user input, and I have the data stored in a dictionary that 
+        is keyed by date. Using a lambda to match on week number 'could' return inaccurate
+        results in week 1 of some years. """
+        # for item in self.__inner_holidays:
+        #     print(str(item))
+        #     raise SystemExit
+        print(type(date_range[0]), type(date_range[1]))
+        filtered_by_range = filter(
+            lambda item: (self.__inner_holidays[item] == '2020-01-13'), self.__inner_holidays.items())
+        #print(list(filtered_by_range))
+        print(dict(filtered_by_range))
+        delay(5)
         # Use a Lambda function to filter by week number and save this as holidays, use the filter on innerHolidays
         # Week number is part of the the Datetime object
         # Cast filter results as list
         # return your holidays
-        pass
 
     def displayHolidaysInWeek(holidayList):
         # Use your filter_holidays_by_week to get list of holidays within a week as a parameter
@@ -344,14 +376,7 @@ class HolidayList:
     #     # Format weather information and return weather string.
     #     pass
 
-    def viewCurrentWeek():
-        # Use the Datetime Module to look up current week and year
-        # Use your filter_holidays_by_week function to get the list of holidays
-        # for the current week/year
-        # Use your displayHolidaysInWeek function to display the holidays in the week
-        # Ask user if they want to get the weather
-        # If yes, use your getWeather function and display results
-        pass
+    
 
     def get_month_number(self, text_month):
         # There is a better way to do this, but I'm doing it this way.
@@ -375,6 +400,7 @@ class HolidayList:
         return dt.datetime.strftime(date_time_object, "%G-%m-%d")
 
     def get_week_nums(self, year, month):
+        """ This function converts year/month -> list of week numbers. """
         end_of_month = calendar.monthrange(year, month)[1]
         starting_week = dt.datetime(year, month, 1).isocalendar()[1]
         ending_week = dt.datetime(year, month, end_of_month).isocalendar()[1]
@@ -410,7 +436,18 @@ class HolidayList:
             else:
                 matched = allowed_months[allowed_months.index(month_input) + 1]
         return matched
-
+    
+    def view_current_week(self):
+        print('In View Current Week Function')
+        
+        # Use the Datetime Module to look up current week and year
+        # Use your filter_holidays_by_week function to get the list of holidays
+        # for the current week/year
+        # Use your displayHolidaysInWeek function to display the holidays in the week
+        # Ask user if they want to get the weather
+        # If yes, use your getWeather function and display results
+        pass
+    
     def holiday_view_builder(self):
         """ This heavy function gathers user input and displays the requested view. """
         print('  Leave blank for current week. "exit" to close')
@@ -418,7 +455,9 @@ class HolidayList:
         if which_year.lower() == "exit":
             return True
 
-        if which_year.strip() != "":
+        if which_year.strip() == "":
+            pass
+        else:
             year_passed = check_input(which_year, "year", [1950, 2050])
             if not year_passed:
                 return False
@@ -492,6 +531,8 @@ class HolidayList:
                                     "  Wheeew, done. That was exhausting. Good thing you got a fancy processor."
                                 )
                                 delay(2)
+                        # Fall-through returns to Main Menu
+                        
             # Once the month has passed get the month number and determine which weeks are in the month
             # for every week in the month print a menu_string consisting of the week_num, date_range
             # ask the user to pick their chosen week
@@ -614,11 +655,13 @@ def main():
     delay(1)
     count_disp = prettify_holiday_count(holiday_cnt, unique)
     main_args = [current_weather, current_day_info, locale_info, count_disp]
-    display_menu_template("Starting", main_args)
-    BoontaEve.scrape_manager()
-    holiday_cnt, unique = BoontaEve.num_holidays()
-    count_disp = prettify_holiday_count(holiday_cnt, unique)
-    main_args = [current_weather, current_day_info, locale_info, count_disp]
+    if holiday_cnt < 100:
+        display_menu_template("Starting", main_args)
+        BoontaEve.scrape_manager()
+        BoontaEve.save_holidays()
+        holiday_cnt, unique = BoontaEve.num_holidays()
+        count_disp = prettify_holiday_count(holiday_cnt, unique)
+        main_args = [current_weather, current_day_info, locale_info, count_disp]
     display_menu_template("Main Menu", main_args)
     outer_passed = False
     while not outer_passed:
@@ -640,6 +683,11 @@ def main():
             while not passed:
                 display_menu_template("Holiday Viewer", main_args)
                 passed = BoontaEve.holiday_view_builder()
+            if type(passed) == list:
+                print(passed)
+                BoontaEve.filter_holidays_by_week(passed)
+            else:
+                print(passed, 'Not a list')
 
         elif main_menu_choice == 5:
             return
