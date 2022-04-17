@@ -44,8 +44,11 @@ class WeatherReport:
         self.__locale = "Castries, St Lucia"
         self.__country = "Wish I Were There"
         self.__current_weather = "Raining Cats and Dogs"
-        self.__country = self.get_locale()
-        # self.__current_weather = self.check_weather('current')
+        self.get_locale()
+        self.__current_weather = self.check_weather('current')
+        print('  Weather Loaded')
+        self.__daily_weather = self.check_weather('daily')
+
         # Uncomment above line when program is ready
 
     # def __post_init__(self):
@@ -54,7 +57,7 @@ class WeatherReport:
     #     print('Here')
 
     def return_data(self):
-        return self.__locale, self.__current_weather
+        return self.__locale, self.__current_weather, self.__daily_weather
 
     def get_date_from_timestamp(self, timestamp):
         converted = dt.datetime.strftime(
@@ -65,12 +68,12 @@ class WeatherReport:
     def check_weather(self, request_type):
         # self.__current_weather = self.get_weather(request_type)
         try:
-            self.__current_weather = self.get_weather(request_type)
+            weather = self.get_weather(request_type)
         except:
-            self.__current_weather = (
+            weather = (
                 "Current Weather Unavailable - A Heat Ticket has been Submitted."
             )
-        return self.__current_weather
+        return weather
 
     def get_weather(self, request_type):  # , locale, locale_country, request_type):
         end_point = {"current": "weather", "daily": "forecast/daily"}
@@ -87,17 +90,14 @@ class WeatherReport:
         querystring = {"q": self.__locale, "units": local_units}
 
         # Uncomment when ready for publish
-        # headers = {
-        #     "X-RapidAPI-Host": "community-open-weather-map.p.rapidapi.com",
-        #     "X-RapidAPI-Key":
-        # }
-
+        headers = {
+            "X-RapidAPI-Host": "community-open-weather-map.p.rapidapi.com",
+            "X-RapidAPI-Key": 
+        }
         response = requests.request(
             "GET", weather_url, headers=headers, params=querystring
         ).json()
-
-        print("API Called")
-
+        print("  Checking the Weather..." if request_type == 'current' else '')
         parsed_response = self.parse_weather_response(response, temp_unit, request_type)
         return parsed_response
 
@@ -105,10 +105,14 @@ class WeatherReport:
         try:
             ip_path = "http://ipinfo.io/json"
             data = requests.get(ip_path).json()
-            return f'{data["city"]}, {data["region"]}', data["country"]
-        except:
+            self.__locale = f'{data["city"]}, {data["region"]}'
+            self.__country = data["country"]
+        except Exception as E:
+            print(E)
             print("Your location has been estimated and may be inaccurate.")
-            return "Castries, St Lucia", "Wish I Were There"
+            self.__locale = "Castries, St Lucia"
+            self.__country = "Wish I Were There"
+            delay(2)
 
     def parse_weather_response(self, response, temp_unit, request_type):
         if request_type == "current":
@@ -145,11 +149,13 @@ class WeatherReport:
 # Each method has pseudo-code instructions
 # --------------------------------------------
 class HolidayList:
-    def __init__(self, errors):
+    def __init__(self, errors, forecast):
         # self.__innerHolidays = []
         self.__errors = errors
         self.__inner_holidays = {}
         self.__pre_loaded_holidays = self.read_json()
+        self.__forecast = forecast
+        self.__forecast_dates = [_ for _ in self.__forecast.keys()]
 
     def add_holiday(self, holiday_object):
         # Make sure holidayObj is an Holiday Object by checking the type
@@ -318,14 +324,6 @@ class HolidayList:
                 continue
         return holiday_dict
 
-    # def scrapeHolidays():
-    #     # Scrape Holidays from https://www.timeanddate.com/holidays/us/
-    #     # Remember, 2 previous years, current year, and 2  years into the future. You can scrape multiple years by adding year to the timeanddate URL. For example https://www.timeanddate.com/holidays/us/2022
-    #     # Check to see if name and date of holiday is in innerHolidays array
-    #     # Add non-duplicates to innerHolidays
-    #     # Handle any exceptions.
-    #     pass
-
     def num_holidays(self):
         """ This function returns the total number of holidays """
         holiday_names = []
@@ -375,17 +373,27 @@ class HolidayList:
             )
             days += list(filtered_by_range)
         return days, date_list
-        # Use a Lambda function to filter by week number and save this as holidays, use the filter on innerHolidays
-        # Week number is part of the the Datetime object
-        # Cast filter results as list
-        # return your holidays
-
+    
+    def check_for_current_week(self, date_list):
+        if any((item in date_list for item in self.__forecast_dates)):
+            q = "  Would you like to include available weather? (y/n) >> "
+            if input(q).lower() in ['y','yes','yeah','yea','ye']:
+                return True
+        return False
+    
     def display_week_holidays(self, date_list):
         holiday_subset, dates = self.filter_holidays_by_week(date_list)
+        weather_string = ""
+        current = self.check_for_current_week(date_list)
         print("")
         for date in dates:
+            if current:
+                if date in [_ for _ in self.__forecast.keys()]:
+                    weather_string = self.get_weather(date)
+                else:
+                    weather_string = '> Forecast is not available for this day.'
             weekday = dt.datetime.strftime(self.convert_dt(date, 'object'), '%A')
-            print(f'  {weekday}, {date}')
+            print(f'  {weekday}, {date} {weather_string}')
             cntr = 0
             for celeb in holiday_subset:
                 if celeb[0] == date:
@@ -394,43 +402,35 @@ class HolidayList:
                         print(holiday)
             print(" " if cntr != 0 else '  * No Holidays * \n')
             
-      
-            
-        if input(" Continue? >> ") == '':
-            print("moving on")
-        # Use your filter_holidays_by_week to get list of holidays within a week as a parameter
-        # Output formated holidays in the week.
-        # * Remember to use the holiday __str__ method.
-
-    # def getWeather(weekNum):
-    #     # Convert weekNum to range between two weeks (something between 1-52)
-    #     # Use Try / Except to catch problems
-    #     # Query API for weather in that week range
-    #     # Format weather information and return weather string.
-    #     pass
+        if input(" Press Enter to Continue: >> "):
+            pass
+        
+    def get_weather(self, date):
+        """ This function combines the weather with the data. 
+        While initially, assignment suggestions said to allow this function
+        to query the weather, but to limit the number of API calls, I am getting
+        the weather when the application starts, and then passing it into the
+        class during initialization. """
+        
+        # "wod" is short for "weather_on_date"
+        wod = self.__forecast[date]
+        weather_string = f"> High: {wod['High']} | {wod['Forecast']} | Clouds: {wod['Cloud Cover']}"
+        return weather_string
+        # Convert weekNum to range between two weeks (something between 1-52)
+        # Use Try / Except to catch problems
+        # Query API for weather in that week range
+        # Format weather information and return weather string.
 
     
 
     def get_month_number(self, text_month):
         # There is a better way to do this, but I'm doing it this way.
         month_dict = {
-            "January": 1,
-            "February": 2,
-            "March": 3,
-            "April": 4,
-            "May": 5,
-            "June": 6,
-            "July": 7,
-            "August": 8,
-            "September": 9,
-            "October": 10,
-            "November": 11,
-            "December": 12,
+            "January": 1, "February": 2, "March": 3, "April": 4, "May": 5,
+            "June": 6, "July": 7, "August": 8, "September": 9, "October": 10,
+            "November": 11, "December": 12,
         }
         return month_dict[text_month]
-
-    # def convert_dt(self, date_time_object):
-    #     return dt.datetime.strftime(date_time_object, "%G-%m-%d")
     
     def convert_dt(self, date_time, date_type):
         if date_type == 'string':
@@ -696,8 +696,8 @@ def main():
     errors = get_errors()
     current_day_info = modify_current_date_time()
     CurrentWeather = WeatherReport()
-    locale_info, current_weather = CurrentWeather.return_data()
-    BoontaEve = HolidayList(errors)
+    locale_info, current_weather, forecast = CurrentWeather.return_data()
+    BoontaEve = HolidayList(errors, forecast)
     holiday_cnt, unique = BoontaEve.num_holidays()
     delay(1)
     count_disp = prettify_holiday_count(holiday_cnt, unique)
