@@ -181,14 +181,30 @@ class HolidayList:
         while not passed:
             print("\n  * Add a Holiday * ")
             holiday = input('  Holiday: >> ')
-            holiday = "".join(_ for _ in holiday if _ in string.ascii_letters + "-'_")
+            holiday = "".join(_ for _ in holiday if _ in string.ascii_letters + "-'_ ")
             if len(holiday) > 2:
+                print('  "YYYY-mm-dd"')
                 holidate = input('     Date: >> ')
                 try:
-                    holidate = dt.datetime.strftime('holidate', '%Y-%m-%d').date()
+                    holidate = dt.datetime.strptime(holidate, '%Y-%m-%d').date()
+                    pretty_date = dt.datetime.strftime(holidate, '%B %d, %Y')
+                    add_date = dt.datetime.strftime(holidate, "%Y-%m-%d")
+                    passed = True
                 except Exception as E:
                     print(E)
-                    print('')
+                    print(self.__errors[5])
+                    delay(4)
+            if passed:
+                print(f'  {holiday} on {pretty_date}')
+                passed = input('  Would you like to add this to the database? (y/n)>> ')
+                if passed.lower() in ['y','yes','yeah','ye','yep']:
+                    new_holiday = [{'name': holiday, 'date': add_date}]
+                    self.convert_new_holidays(new_holiday)
+                    passed = True
+                    print(f'{holiday} added successfully'.center(78, " "))
+                    
+                    
+                    
     def removeHoliday(HolidayName, Date):
         # Find Holiday in innerHolidays by searching the name and date combination.
         # remove the Holiday from innerHolidays
@@ -731,6 +747,8 @@ def main():
     while not outer_passed:
         passed = False
         while not passed:
+            count_disp = prettify_holiday_count(holiday_cnt, unique)
+            main_args = [current_weather, current_day_info, locale_info, count_disp]
             display_menu_template("Main Menu", main_args)
             print(templates[3])
             main_menu_choice = input("  Please Choose an Option >> ")
@@ -738,6 +756,7 @@ def main():
         main_menu_choice = int(main_menu_choice)
         if main_menu_choice == 1:
             BoontaEve.input_holiday()
+            holiday_cnt, unique = BoontaEve.num_holidays()
         elif main_menu_choice == 2:
             pass
         elif main_menu_choice == 3:
