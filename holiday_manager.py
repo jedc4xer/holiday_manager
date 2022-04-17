@@ -233,6 +233,8 @@ class HolidayList:
         for year in all_scraped:
             for holiday in all_scraped[year]:
                 combined['holidays'].append(all_scraped[year][holiday])
+        print('  Merging Scraped Holidays...This may take a moment.'.center(78," ")'\n')
+        self.convert_new_holidays(combined['holidays'])
 
         
     def scrape_holidays(self, target_year):
@@ -552,9 +554,6 @@ def check_input(input_string, requirements, limits):
     delay(1.5)
     return False
 
-
-    
-
     
 def main():
     #locale_info, country = get_locale()
@@ -564,8 +563,13 @@ def main():
     locale_info, current_weather = CurrentWeather.return_data()
     BoontaEve = HolidayList(errors)
     holiday_cnt = BoontaEve.num_holidays()
-    delay(2)
+    delay(1)
     main_args = [current_weather, current_day_info, locale_info, holiday_cnt]
+    display_menu_template('Starting', main_args)
+    BoontaEve.scrape_manager()
+    holiday_cnt = BoontaEve.num_holidays()
+    main_args = [current_weather, current_day_info, locale_info, holiday_cnt]
+    display_menu_template('Main Menu', main_args)
     outer_passed = False
     while not outer_passed:
         passed = False
