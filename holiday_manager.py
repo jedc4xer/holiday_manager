@@ -145,8 +145,6 @@ class HolidayList:
         self.__inner_holidays = {}
         self.__pre_loaded_path = 'pre_loaded_holidays.json'
         self.__pre_loaded_holidays = self.read_json()
-        print(self.__inner_holidays)
-        delay(3)
         
     def add_holiday(self, holiday_object):
         # Make sure holidayObj is an Holiday Object by checking the type
@@ -196,17 +194,17 @@ class HolidayList:
         """
         try:
             if 'managed_holidays.json' in os.listdir():
-                print('Loading Managed Holidays...'.center(78, " "))
+                print('Loading Managed Holidays...'.center(78, " "),"\n")
                 file = open('managed_holidays.json')
                 managed_holidays = json.load(file)
                 return manged_holidays
             else:
-                print('New Environment Detected'.center(78, " "))
-                print('Gathering Preloaded Holidays'.center(78, " "))
+                print('New Environment Detected'.center(78, " "),"\n")
+                print('Gathering Preloaded Holidays'.center(78, " "),"\n")
                 
         except:
-            print('New Environment Detected'.center(78, " "))
-            print('Gathering Preloaded Holidays'.center(78, " "))
+            print('New Environment Detected'.center(78, " "),'\n')
+            print('Gathering Preloaded Holidays'.center(78, " "),"\n")
         
         file = open(self.__pre_loaded_path)
         provided_holidays = json.load(file)['holidays']     
@@ -215,9 +213,30 @@ class HolidayList:
     def save_to_json(filelocation):
         # Write out json file to selected file.
         pass
-      
+    
+    def standard_date(self, date, year):
+        actual_date = dt.datetime.strftime(dt.datetime.strptime(f'{date}, {year}', '%b %d, %Y'),'%Y-%m-%d')
+        return actual_date
+    
+    def scrape_manager(self):
+        """ This function is responsible for controlling the holiday scrape. """
+        current_year = dt.datetime.today().year
+        target_range = [_ for _ in range(current_year - 2, current_year + 3)]
+
+        all_scraped = {}
+        for year in target_range:
+            scraped_holidays = scrape_holidays(year)
+            all_scraped[year] = scraped_holidays
+            print(f'{year}: {len(scraped_holidays)}')
+
+        combined = {"holidays": []}
+        for year in all_scraped:
+            for holiday in all_scraped[year]:
+                combined['holidays'].append(all_scraped[year][holiday])
+
         
     def scrape_holidays(self, target_year):
+        """ This function holds the API call and prepares the data for use. """
         scrape_path = f'https://www.timeanddate.com/holidays/us/{target_year}'#'?hol=43122559'
         raw_scrape = requests.get(scrape_path).text
         soup = BeautifulSoup(raw_scrape)
@@ -225,20 +244,53 @@ class HolidayList:
         return holidays      
         
         
-        
-        
-        
-    def scrapeHolidays():
-        # Scrape Holidays from https://www.timeanddate.com/holidays/us/ 
-        # Remember, 2 previous years, current year, and 2  years into the future. You can scrape multiple years by adding year to the timeanddate URL. For example https://www.timeanddate.com/holidays/us/2022
-        # Check to see if name and date of holiday is in innerHolidays array
-        # Add non-duplicates to innerHolidays
-        # Handle any exceptions.     
-        pass
+    def strain_soup(self, soup, target_year):
+        tables = soup.find_all('table', {'class': 'table'})
+        body = tables[0].find_all('tr')
+        holiday_dict = {}
 
-    def numHolidays():
-        # Return the total number of holidays in innerHolidays
-        pass
+        # This for loop cleans the scrape, and places it in a temporary dictionary
+        for row in body:
+            details = row.get_text("|").split("|")[:4]
+            try:
+                cleaned_date = standard_date(details[0].strip(), target_year)
+
+                name = details[2].strip()
+                if '(substitute)' in name:
+                    continue
+
+                category = details[3].strip()
+                # I am removing this category because events exist on multiple days
+                if 'COVID-19 Lockdown' in category:
+                    continue
+
+                holiday_inner_dict = {
+                    "name": name, 
+                    'date': cleaned_date, 
+                    "category": [category]
+                }
+                if name in holiday_dict:
+                    holiday_dict[name]['category'].append(category)
+                    cats = list(set(holiday_dict[name]['category']))
+                    holiday_dict[name]['category'] = cats
+                else:
+                    holiday_dict[name] = holiday_inner_dict
+            except:
+                continue
+        return holiday_dict    
+        
+        
+    # def scrapeHolidays():
+    #     # Scrape Holidays from https://www.timeanddate.com/holidays/us/ 
+    #     # Remember, 2 previous years, current year, and 2  years into the future. You can scrape multiple years by adding year to the timeanddate URL. For example https://www.timeanddate.com/holidays/us/2022
+    #     # Check to see if name and date of holiday is in innerHolidays array
+    #     # Add non-duplicates to innerHolidays
+    #     # Handle any exceptions.     
+    #     pass
+
+    def num_holidays(self):
+        """ This function returns the total number of holidays """
+        return len(self.__inner_holidays)
     
     def filter_holidays_by_week(year, week_number):
         # Use a Lambda function to filter by week number and save this as holidays, use the filter on innerHolidays
@@ -489,8 +541,9 @@ def main():
     CurrentWeather = WeatherReport()
     locale_info, current_weather = CurrentWeather.return_data()
     BoontaEve = HolidayList(errors)
+    holiday_cnt = BoontaEve.num_holidays()
     delay(2)
-    main_args = [current_weather, current_day_info, locale_info]
+    main_args = [current_weather, current_day_info, locale_info, holiday_cnt]
     outer_passed = False
     while not outer_passed:
         passed = False
@@ -567,68 +620,19 @@ if __name__ == "__main__":
 
 
 
-def standard_date(date, year):
-    actual_date = dt.datetime.strftime(dt.datetime.strptime(f'{date}, {year}', '%b %d, %Y'),'%Y-%m-%d')
-    return actual_date
+
 
 
     
-def strain_soup(soup, target_year):
-    tables = soup.find_all('table', {'class': 'table'})
-    body = tables[0].find_all('tr')
-    holiday_dict = {}
-    
-    # This for loop cleans the scrape, and place it in a temporary dictionary
-    for row in body:
-        details = row.get_text("|").split("|")[:4]
-        try:
-            cleaned_date = standard_date(details[0].strip(), target_year)
-            
-            name = details[2].strip()
-            if '(substitute)' in name:
-                continue
-                
-            category = details[3].strip()
-            # I am removing this category because events exist on multiple days
-            if 'COVID-19 Lockdown' in category:
-                continue
-                
-            holiday_inner_dict = {
-                "name": name, 
-                'date': cleaned_date, 
-                "category": [category]
-            }
-            if name in holiday_dict:
-                holiday_dict[name]['category'].append(category)
-                cats = list(set(holiday_dict[name]['category']))
-                holiday_dict[name]['category'] = cats
-            else:
-                holiday_dict[name] = holiday_inner_dict
-        except:
-            continue
-    return holiday_dict
 
-current_year = dt.datetime.today().year
-target_range = [_ for _ in range(current_year - 2, current_year + 3)]
-
-all_scraped = {}
-for year in target_range:
-    scraped_holidays = scrape_holidays(year)
-    all_scraped[year] = scraped_holidays
-    print(f'{year}: {len(scraped_holidays)}')
-
-combined = {"holidays": []}
-for year in all_scraped:
-    for holiday in all_scraped[year]:
-        combined['holidays'].append(all_scraped[year][holiday])
 
         
 # This saves the scrape to file
-combined_json = json.dumps(combined)
+# combined_json = json.dumps(combined)
 
-with open('scraped_holidays.json', 'w') as file:
-    file.write(combined_json)
-    file.close()
+# with open('scraped_holidays.json', 'w') as file:
+#     file.write(combined_json)
+#     file.close()
 
 
 

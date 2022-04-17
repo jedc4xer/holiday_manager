@@ -11,6 +11,8 @@
   {current_weather}
   {day_info}
   {locale}
+  ````````````````````````
+  Tracked Holidays: {holiday_cnt}
 ,
         MAIN MENU
     `````````````````
