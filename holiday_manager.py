@@ -600,9 +600,7 @@ def check_input(input_string, requirements, limits):
     return False
 
 def prettify_holiday_count(count, unique):
-    # count_length = len(str(f'{count} | {unique}'))
-    # return f'{count} | {unique} {"*" * (42 - count_length - 1)}'
-    return f' {count} <- Count | Unique -> {unique} '.center(77,"-")
+    return f' {count} <- Count | Unique -> {unique} '.center(75,"-")
 
 
 def main():
