@@ -161,10 +161,10 @@ class HolidayList:
         holidate = holiday_object.date
         if holidate in self.__inner_holidays:
             self.__inner_holidays[holidate].append(holiday_object)
-            print("Added holiday to existing date.")
+            #print("Added holiday to existing date.")
         else:
             self.__inner_holidays[holidate] = [holiday_object]
-            print("Added holiday to a new date.")
+            #print("Added holiday to a new date.")
             
     def preview_holidays(self):
         print(self.__inner_holidays)
@@ -600,8 +600,9 @@ def check_input(input_string, requirements, limits):
     return False
 
 def prettify_holiday_count(count, unique):
-    count_length = len(str(f'{count} | {unique}'))
-    return f'{count} | {unique} + {'*' * (42 - count_length)}'
+    # count_length = len(str(f'{count} | {unique}'))
+    # return f'{count} | {unique} {"*" * (42 - count_length - 1)}'
+    return f'{count} <- Count | Unique -> {unique}'.center(78,"*")
 
 
 def main():

@@ -7,7 +7,7 @@
   *```````````````````````````````````````````````````````````````````````````*
                          HOLIDAY MANAGER -> {current_menu}                 
   *---------------------------------------------------------------------------*
-  Tracked Holidays (total | unique): {holiday_cnt}
+  {holiday_cnt}
   {current_weather}
   {day_info}
   {locale}
