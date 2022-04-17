@@ -292,6 +292,12 @@ class HolidayList:
         """ This function returns the total number of holidays """
         return len(self.__inner_holidays)
     
+    def match_week_to_date(self, week_num, year):
+        date_string = f'{year}-V{int(week_num)}-1'
+        start_date = dt.datetime.strptime(date_string, "%G-V%V-%w").date()
+        end_date = start_date + dt.timedelta(days=6.9)
+        return start_date, end_date
+
     def filter_holidays_by_week(year, week_number):
         # Use a Lambda function to filter by week number and save this as holidays, use the filter on innerHolidays
         # Week number is part of the the Datetime object
@@ -325,6 +331,129 @@ class HolidayList:
         # Ask user if they want to get the weather
         # If yes, use your getWeather function and display results
         pass
+    
+    def get_month_number(self, text_month):
+        # There is a better way to do this, but I'm doing it this way.
+        month_dict ={
+            'January': 1,
+            'February': 2, 
+            'March': 3,
+            'April': 4,
+            'May': 5,
+            'June': 6,
+            'July': 7,
+            'August': 8,
+            'September': 9,
+            'October': 10,
+            'November': 11,
+            'December': 12
+        }
+        return month_dict[text_month]    
+    
+    def convert_dt(self, date_time_object):
+        return dt.datetime.strftime(date_time_object, '%G-%m-%d')
+    
+    def get_week_nums(self, year, month):
+        end_of_month = calendar.monthrange(year, month)[1]
+        starting_week = dt.datetime(year, month, 1).isocalendar()[1]
+        ending_week = dt.datetime(year, month, end_of_month).isocalendar()[1]
+
+        # This tries to build a list that will be empty if starting week > ending week
+        res = list(range(starting_week, ending_week + 1))
+        if not res:
+            week_num = 52 if starting_week != 53 else 53
+            res = list(range(starting_week, week_num + 1)) + list(range(1, ending_week + 1))
+        return res    
+
+    def check_month(self, month_input):
+        allowed_months = [
+            'Jan', 'January', 'Feb', 'February', 'Mar', 'March', 'Apr', 
+            'April', 'May', 'May', 'Jun', 'June', 'Jul', 'July', 'Aug', 
+            'August', 'Sept', 'September', 'Oct', 'October', 'Nov', 'November', 
+            'Dec', 'December'
+        ]
+        month_converter = [
+            'January', 'February', 'March', 'April', 'May', 
+            'June', 'July', 'August', 'September', 'October', 
+            'November', 'December'
+        ]
+        if month_input.capitalize() not in allowed_months:
+            print('  That month is not recognized. Please try again. ')
+            return False
+        else:
+            month_input = month_input.capitalize()
+            if month_input in month_converter:
+                matched = month_input
+            else:
+                matched = allowed_months[allowed_months.index(month_input) + 1]       
+        return matched
+
+    
+    def holiday_view_builder(self):
+        """ This heavy function gathers user input and displays the requested view. """
+        print('  Leave blank for current week. "exit" to close')
+        which_year = input("  Which year would you like to view? >> ")
+        if which_year.lower() == 'exit':
+            return True
+        
+        if which_year.strip() != "":
+            year_passed = check_input(which_year, 'year', [1950, 2050]) 
+            if not year_passed:
+                return False
+            which_year = int(which_year)
+            month_passed = False
+            week_passed = False
+            while not month_passed:
+                print('\n  To search by week number, input the week number.')
+                print('  Otherwise, input the name of a month.')
+                which_month = input("  Which month of the year? (i.e. Jan, august) >> ")
+                if which_month.isnumeric():
+                    if int(which_month) in range(1,54):
+                        try:
+                            week_choice = self.match_week_to_date(which_month, which_year)
+                            week_choice = list(map(lambda x: convert_dt(x), [week_choice[0], week_choice[1]]))
+                            month_passed = True
+                            return week_choice
+                        except:
+                            print('That week does not seem to be an option. Please try again.')
+                    else:
+                        print(' That week is not an option. Please try again.')
+                else:
+                    which_month = self.check_month(which_month)
+                    if which_month:
+                        month_passed = True
+                        month_num = self.get_month_number(which_month)
+                        week_nums = self.get_week_nums(which_year, month_num)
+                        translate = True if week_nums[0] > week_nums[1] else False
+                        week_dict = {}
+                        print('\n   #: Date Range','\n   ``````````````')
+                        for i, week in enumerate(week_nums):
+                            if (i == 0 and translate):
+                                dates = self.match_week_to_date(week, which_year - 1)
+                            else:
+                                dates = self.match_week_to_date(week, which_year)
+                            week_dict[str(week)] = list(map(lambda x: self.convert_dt(x), [dates[0], dates[1]]))
+
+                            dates = " to ".join(str(_.month) + "-" + str(_.day) for _ in dates)
+                            print(f'{str(week).rjust(4)}: {dates}')
+                        example = random.choice([_ for _ in week_dict.keys()])
+                        week_choice = input(f'\n  Choose a week: (i.e. "{example}") >> ')
+                        if (week_choice.isnumeric() and week_choice in week_dict.keys()):
+                            return week_dict[week_choice]
+                        else:
+                            if '"' in week_choice:
+                                print('  Hmmm... Try leaving out the " " marks. That was just an example. ')
+                                delay(2)
+                            else:
+                                print("  Hmmm... That just doesn't compute.\n  Starting Infinite Loop...")
+                                delay(2)
+                                print("  Wheeew, done. That was exhausting. Good thing you got a fancy processor.")
+                                delay(2)
+            # Once the month has passed get the month number and determine which weeks are in the month
+            # for every week in the month print a menu_string consisting of the week_num, date_range
+            # ask the user to pick their chosen week
+            # The weeknumber will be used to determine which holidays to display, so holidays will be matched to a week number    
+        
 
 
 ############## GENERAL FUNCTIONS ##############
@@ -347,35 +476,7 @@ def get_errors():
     ).text.split(",")
     return errors      
     
-def get_month_number(text_month):
-    # There is a better way to do this, but I'm doing it this way.
-    month_dict ={
-        'January': 1,
-        'February': 2, 
-        'March': 3,
-        'April': 4,
-        'May': 5,
-        'June': 6,
-        'July': 7,
-        'August': 8,
-        'September': 9,
-        'October': 10,
-        'November': 11,
-        'December': 12
-    }
-    return month_dict[text_month]    
-    
-def get_week_nums(year, month):
-    end_of_month = calendar.monthrange(year, month)[1]
-    starting_week = dt.datetime(year, month, 1).isocalendar()[1]
-    ending_week = dt.datetime(year, month, end_of_month).isocalendar()[1]
-    
-    # This tries to build a list that will be empty if starting week > ending week
-    res = list(range(starting_week, ending_week + 1))
-    if not res:
-        week_num = 52 if starting_week != 53 else 53
-        res = list(range(starting_week, week_num + 1)) + list(range(1, ending_week + 1))
-    return res    
+
     
     
 #.............   MENU FUNCTIONS  .............#    
@@ -397,76 +498,16 @@ def display_menu_template(active_menu, arg_list):
     )
 
     
-def holiday_view_builder():
-    print('  Leave blank for current week.')
-    which_year = input("  Which year would you like to view? >> ")
-    
-    if which_year.strip() != "":
-        year_passed = check_input(which_year, 'year', [1950, 2050]) 
-        if not year_passed:
-            return False
-        which_year = int(which_year)
-        month_passed = False
-        week_passed = False
-        while not month_passed:
-            print('\n  To search by week number, input the week number.')
-            print('  Otherwise, input the name of a month.')
-            which_month = input("  Which month of the year? (i.e. Jan, august) >> ")
-            if which_month.isnumeric():
-                if int(which_month) in range(1,54):
-                    try:
-                        week_choice = match_week_to_date(which_month, which_year)
-                        week_choice = list(map(lambda x: convert_dt(x), [week_choice[0], week_choice[1]]))
-                        month_passed = True
-                        return week_choice
-                    except:
-                        print('That week does not seem to be an option. Please try again.')
-                else:
-                    print(' That week is not an option. Please try again.')
-            else:
-                which_month = check_month(which_month)
-                if which_month:
-                    month_passed = True
-                    month_num = get_month_number(which_month)
-                    week_nums = get_week_nums(which_year, month_num)
-                    translate = True if week_nums[0] > week_nums[1] else False
-                    week_dict = {}
-                    print('\n   #: Date Range','\n   ``````````````')
-                    for i, week in enumerate(week_nums):
-                        if (i == 0 and translate):
-                            dates = match_week_to_date(week, which_year - 1)
-                        else:
-                            dates = match_week_to_date(week, which_year)
-                        week_dict[str(week)] = list(map(lambda x: convert_dt(x), [dates[0], dates[1]]))
-                        
-                        dates = " to ".join(str(_.month) + "-" + str(_.day) for _ in dates)
-                        print(f'{str(week).rjust(4)}: {dates}')
-                    example = random.choice([_ for _ in week_dict.keys()])
-                    week_choice = input(f'\n  Choose a week: (i.e. "{example}") >> ')
-                    if (week_choice.isnumeric() and week_choice in week_dict.keys()):
-                        return week_dict[week_choice]
-                    else:
-                        if '"' in week_choice:
-                            print('  Hmmm... Try leaving out the " " marks. That was just an example. ')
-                            delay(2)
-                        else:
-                            print("  Hmmm... That just doesn't compute.\n  Starting Infinite Loop...")
-                            delay(2)
-                            print("  Wheeew, done. That was exhausting. Good thing you got a fancy processor.")
-                            delay(2)
-        # Once the month has passed get the month number and determine which weeks are in the month
-        # for every week in the month print a menu_string consisting of the week_num, date_range
-        # ask the user to pick their chosen week
-        # The weeknumber will be used to determine which holidays to display, so holidays will be matched to a week number    
-    
-def convert_dt(date_time_object):
-    return dt.datetime.strftime(date_time_object, '%G-%m-%d')
 
-def match_week_to_date(week_num, year):
-    date_string = f'{year}-V{int(week_num)}-1'
-    start_date = dt.datetime.strptime(date_string, "%G-V%V-%w").date()
-    end_date = start_date + dt.timedelta(days=6.9)
-    return start_date, end_date
+    
+
+
+### Moved the below function inside class
+# def match_week_to_date(week_num, year):
+#     date_string = f'{year}-V{int(week_num)}-1'
+#     start_date = dt.datetime.strptime(date_string, "%G-V%V-%w").date()
+#     end_date = start_date + dt.timedelta(days=6.9)
+#     return start_date, end_date
 
 def delay(duration):
     time.sleep(duration)
@@ -511,28 +552,7 @@ def check_input(input_string, requirements, limits):
     delay(1.5)
     return False
 
-def check_month(month_input):
-    allowed_months = [
-        'Jan', 'January', 'Feb', 'February', 'Mar', 'March', 'Apr', 
-        'April', 'May', 'May', 'Jun', 'June', 'Jul', 'July', 'Aug', 
-        'August', 'Sept', 'September', 'Oct', 'October', 'Nov', 'November', 
-        'Dec', 'December'
-    ]
-    month_converter = [
-        'January', 'February', 'March', 'April', 'May', 
-        'June', 'July', 'August', 'September', 'October', 
-        'November', 'December'
-    ]
-    if month_input.capitalize() not in allowed_months:
-        print('  That month is not recognized. Please try again. ')
-        return False
-    else:
-        month_input = month_input.capitalize()
-        if month_input in month_converter:
-            matched = month_input
-        else:
-            matched = allowed_months[allowed_months.index(month_input) + 1]       
-    return matched
+
     
 
     
@@ -565,7 +585,7 @@ def main():
             passed = False
             while not passed:
                 display_menu_template('Holiday Viewer', main_args)
-                passed = holiday_view_builder()
+                passed = BoontaEve.holiday_view_builder()
                     
                 
         elif main_menu_choice == 5:
