@@ -6,9 +6,9 @@
 ,  Internal Error: (Error 505)
   Hmmm... Try leaving out the " " marks. That was just an example.
   
-,  Eternal Error: (Error 506)
+,  Eternal Exercise: (Error 506)
   Hmmm... That just doesn't compute.\n  Starting Infinite Loop...
   
-,  Eternal Satisfaction: (Error 507)
+,  Eternal Exhaustion: (Error 507)
   Wheeew, done. That was exhausting. Good thing you got a fancy processor.
   
