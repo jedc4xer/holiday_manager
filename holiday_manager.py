@@ -558,12 +558,12 @@ class HolidayList:
                             return week_dict[week_choice]
                         else:
                             if '"' in week_choice:
-                                print(errors[1])              
+                                print(self.__errors[1])              
                                 delay(2)
                             else:
-                                print(errors[2])
+                                print(self.__errors[2])
                                 delay(2)
-                                print(errors[3])
+                                print(self.__errors[3])
                                 delay(2)
                         # Fall-through returns to Main Menu
                         
@@ -599,12 +599,13 @@ def get_errors():
 
 # .............   MENU FUNCTIONS  .............#
 
-def save_menu():
+def save_menu(BoontaEve):
     if input("  Do you want to save? (yes) >> ").lower() in ['y','yes','yeah','yea']:
         try:
             BoontaEve.save_holidays()
             print('  Save Succeeded')
-        except:
+        except Exception as E:
+            print(E)
             print('  Save Failed')
     else:
         print('  Canceled without saving... Returning to main menu.')
@@ -724,7 +725,7 @@ def main():
             pass
         elif main_menu_choice == 3:
             display_menu_template("Save Menu", main_args)
-            save_menu()
+            save_menu(BoontaEve)
         elif main_menu_choice == 4:
             passed = False
             while not passed:
