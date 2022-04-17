@@ -1,9 +1,10 @@
-import json
-import requests
 import os
-import calendar
+import json
 import time
 import random
+import string
+import calendar
+import requests
 
 import datetime as dt
 
@@ -14,13 +15,7 @@ clear_term = "cls||clear"
 
 ## May add an exit note that makes a suggestion based on the weather
 ## May add an exit ASCII Logo if time allows
-
-# -------------------------------------------
-# Modify the holiday class to
-# 1. Only accept Datetime objects for date.
-# 2. You may need to add additional functions
-# 3. You may drop the init if you are using @dataclasses
-# --------------------------------------------
+## Did not notice that the holiday class is required to only accept DateTime objects
 
 
 @dataclass
@@ -44,10 +39,12 @@ class WeatherReport:
         self.__locale = "Castries, St Lucia"
         self.__country = "Wish I Were There"
         self.__current_weather = "Raining Cats and Dogs"
-        self.get_locale()
-        self.__current_weather = self.check_weather('current')
-        print('  Weather Loaded')
-        self.__daily_weather = self.check_weather('daily')
+        self.__daily_weather = {"Sunny": "Sunny Somewhere Sometime"}
+        if 1 == 0:
+            self.get_locale()
+            self.__current_weather = self.check_weather('current')
+            print('  Weather Loaded')
+            self.__daily_weather = self.check_weather('daily')
 
         # Uncomment above line when program is ready
 
@@ -89,7 +86,6 @@ class WeatherReport:
 
         querystring = {"q": self.__locale, "units": local_units}
 
-        # Uncomment when ready for publish
         headers = {
             "X-RapidAPI-Host": "community-open-weather-map.p.rapidapi.com",
             "X-RapidAPI-Key": 
@@ -179,7 +175,20 @@ class HolidayList:
         # Find Holiday in innerHolidays
         # Return Holiday
         pass
-
+    
+    def input_holiday(self):
+        passed = False
+        while not passed:
+            print("\n  * Add a Holiday * ")
+            holiday = input('  Holiday: >> ')
+            holiday = "".join(_ for _ in holiday if _ in string.ascii_letters + "-'_")
+            if len(holiday) > 2:
+                holidate = input('     Date: >> ')
+                try:
+                    holidate = dt.datetime.strftime('holidate', '%Y-%m-%d').date()
+                except Exception as E:
+                    print(E)
+                    print('')
     def removeHoliday(HolidayName, Date):
         # Find Holiday in innerHolidays by searching the name and date combination.
         # remove the Holiday from innerHolidays
@@ -486,7 +495,44 @@ class HolidayList:
         # Ask user if they want to get the weather
         # If yes, use your getWeather function and display results
         pass
-            
+    
+    def drill_down_to_week(self, which_month, which_year):
+        month_passed = True
+        month_num = self.get_month_number(which_month)
+        week_nums = self.get_week_nums(which_year, month_num)
+        translate = True if week_nums[0] > week_nums[1] else False
+        week_dict = {}
+        print("\n   #: Date Range", "\n   ``````````````")
+        for i, week in enumerate(week_nums):
+            if i == 0 and translate:
+                dates = self.match_week_to_date(week, which_year - 1)
+            else:
+                dates = self.match_week_to_date(week, which_year)
+
+            week_dict[str(week)] = list(
+                map(lambda x: self.convert_dt(x, 'string'), [dates[0], dates[1]])
+            )
+
+            dates = " to ".join(
+                str(_.month) + "-" + str(_.day) for _ in dates
+            )
+            print(f"{str(week).rjust(4)}: {dates}")
+        example = random.choice([_ for _ in week_dict.keys()])
+        week_choice = input(
+            f'\n  Choose a week: (i.e. "{example}") >> '
+        )
+        if week_choice.isnumeric() and week_choice in week_dict.keys():
+            return week_dict[week_choice]
+        else:
+            if '"' in week_choice:
+                print(self.__errors[1])              
+                delay(2)
+            else:
+                print(self.__errors[2])
+                delay(2)
+                print(self.__errors[3])
+                delay(2)
+    
     def holiday_view_builder(self):
         """ This heavy function gathers user input and displays the requested view. """
         print('  Leave blank for current week. "exit" to close')
@@ -495,7 +541,15 @@ class HolidayList:
             return True
 
         if which_year.strip() == "":
-            pass
+            today = dt.datetime.today().date()
+            year, week_num = today.year, dt.datetime.strftime(today, '%W')
+            week_choice = self.match_week_to_date(week_num, year)
+            return list(
+                map(
+                    lambda x: self.convert_dt(x, 'string'), 
+                    [week_choice[0], week_choice[1]],
+                )
+            )
         else:
             year_passed = check_input(which_year, "year", [1950, 2050])
             if not year_passed:
@@ -510,18 +564,21 @@ class HolidayList:
                 if which_month.isnumeric():
                     if int(which_month) in range(1, 54):
                         try:
+                            # "which_month" in this case is actually the week number
+                            # because the user bypassed the standard options.
                             week_choice = self.match_week_to_date(
                                 which_month, which_year
                             )
                             week_choice = list(
                                 map(
-                                    lambda x: convert_dt(x, 'string'),
+                                    lambda x: self.convert_dt(x, 'string'),
                                     [week_choice[0], week_choice[1]],
                                 )
                             )
                             month_passed = True
                             return week_choice
-                        except:
+                        except Exception as E:
+                            print(E)
                             print(
                                 "That week does not seem to be an option. Please try again."
                             )
@@ -530,48 +587,8 @@ class HolidayList:
                 else:
                     which_month = self.check_month(which_month)
                     if which_month:
-                        month_passed = True
-                        month_num = self.get_month_number(which_month)
-                        week_nums = self.get_week_nums(which_year, month_num)
-                        translate = True if week_nums[0] > week_nums[1] else False
-                        week_dict = {}
-                        print("\n   #: Date Range", "\n   ``````````````")
-                        for i, week in enumerate(week_nums):
-                            if i == 0 and translate:
-                                dates = self.match_week_to_date(week, which_year - 1)
-                            else:
-                                dates = self.match_week_to_date(week, which_year)
-
-                            week_dict[str(week)] = list(
-                                map(lambda x: self.convert_dt(x, 'string'), [dates[0], dates[1]])
-                            )
-
-                            dates = " to ".join(
-                                str(_.month) + "-" + str(_.day) for _ in dates
-                            )
-                            print(f"{str(week).rjust(4)}: {dates}")
-                        example = random.choice([_ for _ in week_dict.keys()])
-                        week_choice = input(
-                            f'\n  Choose a week: (i.e. "{example}") >> '
-                        )
-                        if week_choice.isnumeric() and week_choice in week_dict.keys():
-                            return week_dict[week_choice]
-                        else:
-                            if '"' in week_choice:
-                                print(self.__errors[1])              
-                                delay(2)
-                            else:
-                                print(self.__errors[2])
-                                delay(2)
-                                print(self.__errors[3])
-                                delay(2)
-                        # Fall-through returns to Main Menu
-                        
-            # Once the month has passed get the month number and determine which weeks are in the month
-            # for every week in the month print a menu_string consisting of the week_num, date_range
-            # ask the user to pick their chosen week
-            # The weeknumber will be used to determine which holidays to display, so holidays will be matched to a week number
-
+                        return(self.drill_down_to_week(which_month, which_year))
+        # Fall-through returns None to Main Menu
 
 ############## GENERAL FUNCTIONS ##############
 ##-------------------------------------------##
@@ -720,7 +737,7 @@ def main():
             passed = check_input(main_menu_choice, "number", 5)
         main_menu_choice = int(main_menu_choice)
         if main_menu_choice == 1:
-            pass
+            BoontaEve.input_holiday()
         elif main_menu_choice == 2:
             pass
         elif main_menu_choice == 3:
