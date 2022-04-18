@@ -149,9 +149,12 @@ class HolidayList:
         # self.__innerHolidays = []
         self.__errors = errors
         self.__inner_holidays = {}
+        self.__unsaved_holidays = 0
+        self.__holiday_source = "unknown"
         self.__pre_loaded_holidays = self.read_json()
         self.__forecast = forecast
         self.__forecast_dates = [_ for _ in self.__forecast.keys()]
+        
 
     def add_holiday(self, holiday_object):
         # Make sure holidayObj is an Holiday Object by checking the type
@@ -170,11 +173,11 @@ class HolidayList:
             
     def preview_holidays(self):
         print(self.__inner_holidays)
+        
+    def return_save_status(self):
+        return self.__unsaved_holidays
 
-    def findHoliday(HolidayName, Date):
-        # Find Holiday in innerHolidays
-        # Return Holiday
-        pass
+    
     
     def input_holiday(self):
         passed = False
@@ -203,13 +206,67 @@ class HolidayList:
                     passed = True
                     print(f'{holiday} added successfully'.center(78, " "))
                     
+    def seek_holiday(self, user_input):
+        match_found = False
+        possible_matches = {}
+        cntr = 0
+        for date in self.__inner_holidays:
+            for item in self.__inner_holidays[date]:
+                if user_input in item.name.lower():
+                    cntr += 1
+                    match_date = item.date
+                    match_name = item.name
+                    possible_matches[str(cntr)] = [match_date, match_name]
+                    print(f'  {str(cntr).rjust(2)}: {item.date} > {item.name}')
+        if len(possible_matches) == 0:
+            print('  There were no matches found.\n')
+            return 'failed'
+        print('\n  If you want to delete one of these, enter the number.')
+        print('  A failed match will return you to the main menu.')
+        choice = input("  Enter your choice: >> ")
+        if choice in possible_matches:
+            print(f'  Removing {possible_matches[choice][1]} on {possible_matches[choice][0]}')
+            if input('  Proceed? (y/n) >> ').lower() in ['y','yes','yeah']:
+                match_found = True
+        if match_found:
+            return possible_matches[choice]
+        return 'passed'
+           
                     
+    def remove_holiday(self):
+        passed = False
+        while not passed:
+            print('  Enter either a date ( "YYYY-mm-dd") or a holiday.')
+            user_input = input('  Find: >> ').lower()
+            try:
+                date_input = dt.datetime.strptime(user_input, '%Y-%m-%d').date()
+                user_input = dt.datetime.strftime(date_input, '%Y-%m-%d')
+            except:
+                passed = False
+                
+            result = self.seek_holiday(user_input)
+            if result == 'passed':
+                passed = True
+            elif result == 'failed':
+                passed = False
+            else:
+                for item in self.__inner_holidays[result[0]]:
+                    if item.name == result[1]:
+                        try:
+                            self.__inner_holidays[result[0]].remove(item)
+                            print('  Item Successfully Removed')
+                            self.__unsaved_holidays += 1
+                            passed = True
+                            delay(2)
+                            break
+                        except:
+                            print('  Item Removal Failed')
+                        
                     
-    def removeHoliday(HolidayName, Date):
+            
         # Find Holiday in innerHolidays by searching the name and date combination.
         # remove the Holiday from innerHolidays
         # inform user you deleted the holiday
-        pass
 
     def convert_new_holidays(self, provided_holidays):
         for new_holiday in provided_holidays:
@@ -221,6 +278,8 @@ class HolidayList:
                 holiday_object = Holiday(new_holiday["name"], new_holiday["date"], new_holiday['category'])
             
             self.add_holiday(holiday_object)
+            if self.__holiday_source == 'managed':
+                self.__unsaved_holidays += 1
 
     def read_json(self):
         """ 
@@ -234,6 +293,7 @@ class HolidayList:
                 file = open("managed_holidays.json")
                 managed_holidays = json.load(file)["holidays"]
                 self.convert_new_holidays(managed_holidays)
+                self.__holiday_source = 'managed'
                 delay(3)
             else:
                 print("New Environment Detected".center(78, " "), "\n")
@@ -241,6 +301,7 @@ class HolidayList:
                 file = open("pre_loaded_holidays.json")
                 managed_holidays = json.load(file)["holidays"]
                 self.convert_new_holidays(managed_holidays)
+                self.__holiday_source = 'unmanaged'
         except:
             print("System Environment Inconsistency".center(78, " "), "\n")
             print("Gathering Preloaded Holidays".center(78, " "), "\n")
@@ -248,11 +309,9 @@ class HolidayList:
             file = open("pre_loaded_holidays.json")
             provided_holidays = json.load(file)["holidays"]
             self.convert_new_holidays(provided_holidays)
+            self.__holiday_source = 'unmanaged'
 
-    def save_to_json(filelocation):
-        # Write out json file to selected file.
-        pass
-    
+            
     #This saves the scrape to file
     def save_holidays(self):
         combined = {"holidays": []}
@@ -273,6 +332,7 @@ class HolidayList:
             with open('managed_holidays.json', 'w') as file:
                 file.write(combined_json)
                 file.close()
+            self.__unsaved_holidays = 0
         except:
             print('  Hmmm.... maybe I need a stepladder. I could not reach the shelf!.')
 
@@ -654,7 +714,7 @@ def display_menu_template(active_menu, arg_list):
     menu_identifier = prettify_current_menu(active_menu)
     print(
         templates[1].format(
-            menu_identifier=flow_location,
+            flow_location=menu_identifier,
             current_menu=active_menu,
             current_weather=current_weather,
             day_info=current_day_info,
@@ -722,8 +782,12 @@ def check_input(input_string, requirements, limits):
     delay(1.5)
     return False
 
-def prettify_holiday_count(count, unique):
-    return f' {count} <- Count | Unique -> {unique} '.center(75,"-")
+def prettify_holiday_count(count, unique, save_status):
+    if save_status > 0:
+        unsaved = f'| Unsaved: {save_status}'
+    else:
+        unsaved = ''
+    return f' {count} <- Count | Unique -> {unique} {unsaved}'.center(75,"-")
 
 def prettify_current_menu(menu):
     return f'  HOLIDAY MANAGER > {menu}  '.center(75,"`")
@@ -737,22 +801,25 @@ def main():
     locale_info, current_weather, forecast = CurrentWeather.return_data()
     BoontaEve = HolidayList(errors, forecast)
     holiday_cnt, unique = BoontaEve.num_holidays()
+    save_status = BoontaEve.return_save_status()
     delay(1)
-    count_disp = prettify_holiday_count(holiday_cnt, unique)
+    count_disp = prettify_holiday_count(holiday_cnt, unique, save_status)
     main_args = [current_weather, current_day_info, locale_info, count_disp]
     if holiday_cnt < 100:
         display_menu_template("Starting", main_args)
         BoontaEve.scrape_manager()
         
         holiday_cnt, unique = BoontaEve.num_holidays()
-        count_disp = prettify_holiday_count(holiday_cnt, unique)
+        save_status = BoontaEve.return_save_status()
+        count_disp = prettify_holiday_count(holiday_cnt, unique, save_status)
         main_args = [current_weather, current_day_info, locale_info, count_disp]
     display_menu_template("Main Menu", main_args)
     outer_passed = False
     while not outer_passed:
         passed = False
         while not passed:
-            count_disp = prettify_holiday_count(holiday_cnt, unique)
+            save_status = BoontaEve.return_save_status()
+            count_disp = prettify_holiday_count(holiday_cnt, unique, save_status)
             main_args = [current_weather, current_day_info, locale_info, count_disp]
             display_menu_template("Main Menu", main_args)
             print(templates[3])
@@ -763,7 +830,8 @@ def main():
             BoontaEve.input_holiday()
             holiday_cnt, unique = BoontaEve.num_holidays()
         elif main_menu_choice == 2:
-            pass
+            BoontaEve.remove_holiday()
+            holiday_cnt, unique = BoontaEve.num_holidays()
         elif main_menu_choice == 3:
             display_menu_template("Save Menu", main_args)
             save_menu(BoontaEve)
@@ -773,9 +841,7 @@ def main():
                 display_menu_template("Holiday Viewer", main_args)
                 passed = BoontaEve.holiday_view_builder()
             if type(passed) == list:
-                BoontaEve.display_week_holidays(passed)
-                
-                
+                BoontaEve.display_week_holidays(passed)   
             else:
                 print(passed, 'Not a list')
 
