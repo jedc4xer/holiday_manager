@@ -651,8 +651,10 @@ def display_menu_template(active_menu, arg_list):
     current_day_info = arg_list[1]
     locale_info = arg_list[2]
     holiday_cnt = arg_list[3]
+    menu_identifier = prettify_current_menu(active_menu)
     print(
         templates[1].format(
+            menu_identifier=flow_location,
             current_menu=active_menu,
             current_weather=current_weather,
             day_info=current_day_info,
@@ -722,6 +724,9 @@ def check_input(input_string, requirements, limits):
 
 def prettify_holiday_count(count, unique):
     return f' {count} <- Count | Unique -> {unique} '.center(75,"-")
+
+def prettify_current_menu(menu):
+    return f'  HOLIDAY MANAGER > {menu}  '.center(75,"`")
 
 
 def main():
