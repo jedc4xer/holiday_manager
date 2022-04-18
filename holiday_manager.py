@@ -364,7 +364,7 @@ class HolidayList:
             else:
                 print("New Environment Detected".center(78, " "), "\n")
                 print("Gathering Preloaded Holidays".center(78, " "), "\n")
-                file = open("pre_loaded_holidays.json")
+                file = open("holidays.json")
                 managed_holidays = json.load(file)["holidays"]
                 self.convert_new_holidays(managed_holidays)
                 self.__holiday_source = "unmanaged"
@@ -372,7 +372,7 @@ class HolidayList:
             print("System Environment Inconsistency".center(78, " "), "\n")
             print("Gathering Preloaded Holidays".center(78, " "), "\n")
             delay(2)
-            file = open("pre_loaded_holidays.json")
+            file = open("holidays.json")
             provided_holidays = json.load(file)["holidays"]
             self.convert_new_holidays(provided_holidays)
             self.__holiday_source = "unmanaged"
