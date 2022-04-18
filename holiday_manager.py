@@ -15,6 +15,7 @@ clear_term = "cls||clear"
 
 ## Did not notice that the holiday class is required to only accept DateTime objects
 
+
 @dataclass
 class Holiday:
     """ Holiday Class """
@@ -41,17 +42,19 @@ class WeatherReport:
         try:
             self.get_locale()
         except Exception as E:
-            print(f'  Unable to determine locale due to {E}')
+            print(f"  Unable to determine locale due to {E}")
             self.__locale = "Castries, St Lucia"
             self.__country = "Wish I Were There"
-        
+
         try:
             self.__current_weather = self.check_weather("current")
             self.__daily_weather = self.check_weather("daily")
             print("  Weather Loaded")
         except Exception as E:
-            print(f'  Unable to determine weather due to {E}')
-            self.__current_weather = "Current Weather Unavailable - A Heat Ticket has been Submitted."
+            print(f"  Unable to determine weather due to {E}")
+            self.__current_weather = (
+                "Current Weather Unavailable - A Heat Ticket has been Submitted."
+            )
             self.__daily_weather = {"Sunny": "Sunny Somewhere Sometime"}
 
     def return_data(self):
@@ -252,7 +255,7 @@ class HolidayList:
         while not passed:
             print("\n  * Add a Holiday * ")
             holiday = input("  Holiday: ('cancel' to quit) >> ")
-            if holiday.lower() == 'cancel':
+            if holiday.lower() == "cancel":
                 return
             holiday = "".join(_ for _ in holiday if _ in string.ascii_letters + "-'_ ")
             if len(holiday) > 2:
@@ -263,14 +266,14 @@ class HolidayList:
                     add_date = dt.datetime.strftime(holidate, "%Y-%m-%d")
                     passed = True
                 except:
-                    print('\n',self.__errors[4])
+                    print("\n", self.__errors[4])
                     delay(4)
                     return
             if passed:
                 print(f"\n  Adding: {holiday} on {pretty_date}")
                 passed = input("  Would you like to add this to the database? (y/n)>> ")
                 if passed.lower() in ["y", "yes", "yeah", "ye", "yep"]:
-                    self.__holiday_source = 'unmanaged'
+                    self.__holiday_source = "unmanaged"
                     new_holiday = [{"name": holiday, "date": add_date}]
                     self.convert_new_holidays(new_holiday)
                     passed = True
@@ -281,12 +284,12 @@ class HolidayList:
         match_found = False
         possible_matches = {}
         cntr = 0
-        print('')
+        print("")
         for date in self.__inner_holidays:
             for item in self.__inner_holidays[date]:
-                if input_type == 'date':
+                if input_type == "date":
                     match_on = item.date
-                else: 
+                else:
                     match_on = item.name.lower()
                 if user_input in match_on:
                     cntr += 1
@@ -316,16 +319,16 @@ class HolidayList:
         while not passed:
             print('  Enter either a date ( "YYYY-mm-dd") or a holiday.')
             user_input = input("  Find: ('cancel' to quit) >> ").lower()
-            if user_input.lower() == 'cancel':
+            if user_input.lower() == "cancel":
                 return
             try:
                 date_input = dt.datetime.strptime(user_input, "%Y-%m-%d").date()
                 user_input = dt.datetime.strftime(date_input, "%Y-%m-%d")
-                result = self.seek_holiday(user_input, 'date')
+                result = self.seek_holiday(user_input, "date")
             except:
                 passed = False
-                result = self.seek_holiday(user_input, 'name')
-                
+                result = self.seek_holiday(user_input, "name")
+
             if result == "passed":
                 passed = True
             elif result == "failed":
@@ -706,9 +709,10 @@ def display_menu_template(active_menu, arg_list):
         )
     )
 
+
 def display_main_menu(BoontaEve, CurrentWeather, errors, templates, current_day_info):
     locale_info, current_weather, forecast = CurrentWeather.return_data()
-    
+
     outer_passed = False
     while not outer_passed:
         passed = False
@@ -721,7 +725,7 @@ def display_main_menu(BoontaEve, CurrentWeather, errors, templates, current_day_
             print(templates[3])
             main_menu_choice = input("  Please Choose an Option >> ")
             passed = check_input(main_menu_choice, "number", 5)
-        
+
         # Manage User Choices
         main_menu_choice = int(main_menu_choice)
         if main_menu_choice == 1:
@@ -743,7 +747,7 @@ def display_main_menu(BoontaEve, CurrentWeather, errors, templates, current_day_
         elif main_menu_choice == 5:
             display_menu_template("Exit Application", main_args)
             outer_passed = check_exit(save_status)
-    
+
 
 # ............. GENERAL FUNCTIONS .............#
 
@@ -813,38 +817,39 @@ def check_exit(save_status):
 def main():
     # Get Preliminary Information
     current_day_info = modify_current_date_time()
-    
+
     # Initialize Weather
     CurrentWeather = WeatherReport()
-    
+
     # Get Weather Data
     locale_info, current_weather, forecast = CurrentWeather.return_data()
-    
+
     # Initialize Holidays
     BoontaEve = HolidayList(errors, forecast)
-    
+
     # Get summary holiday info
     holiday_cnt, unique = BoontaEve.num_holidays()
     save_status = BoontaEve.return_save_status()
     delay(1)
-     
+
     # If there are fewer than 100 holidays, go get the holidays.
     if holiday_cnt < 100:
         # Prepare Information for Display
         count_disp = prettify_holiday_count(holiday_cnt, unique, save_status)
         main_args = [current_weather, current_day_info, locale_info, count_disp]
         display_menu_template("Starting", main_args)
-        
+
         # Scrape
         BoontaEve.scrape_manager()
-        
+
         # Update the summary
         holiday_cnt, unique = BoontaEve.num_holidays()
         save_status = BoontaEve.return_save_status()
-    
+
     display_main_menu(BoontaEve, CurrentWeather, errors, templates, current_day_info)
     # Return goes to exit
-    
+
+
 clean_screen()
 errors = get_errors()
 templates = get_templates()
