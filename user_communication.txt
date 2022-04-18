@@ -19,4 +19,10 @@
   " 2020-12-01 "
   It works for everyone else.
 
+,  Dating Problems: (DMC Delorean Error 1982)
+  
+  Looks like the flux capacitor has failed.
+  
+  You must be trying to view a year that is before 2020 or after 2024.
+
 ,

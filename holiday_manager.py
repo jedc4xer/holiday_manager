@@ -42,9 +42,9 @@ class WeatherReport:
         self.__daily_weather = {"Sunny": "Sunny Somewhere Sometime"}
         if 1 == 0:
             self.get_locale()
-            self.__current_weather = self.check_weather('current')
-            print('  Weather Loaded')
-            self.__daily_weather = self.check_weather('daily')
+            self.__current_weather = self.check_weather("current")
+            print("  Weather Loaded")
+            self.__daily_weather = self.check_weather("daily")
 
     def return_data(self):
         return self.__locale, self.__current_weather, self.__daily_weather
@@ -60,9 +60,7 @@ class WeatherReport:
         try:
             weather = self.get_weather(request_type)
         except:
-            weather = (
-                "Current Weather Unavailable - A Heat Ticket has been Submitted."
-            )
+            weather = "Current Weather Unavailable - A Heat Ticket has been Submitted."
         return weather
 
     def get_weather(self, request_type):  # , locale, locale_country, request_type):
@@ -81,12 +79,12 @@ class WeatherReport:
 
         headers = {
             "X-RapidAPI-Host": "community-open-weather-map.p.rapidapi.com",
-            "X-RapidAPI-Key": 
+            "X-RapidAPI-Key": ,
         }
         response = requests.request(
             "GET", weather_url, headers=headers, params=querystring
         ).json()
-        print("  Checking the Weather..." if request_type == 'current' else '')
+        print("  Checking the Weather..." if request_type == "current" else "")
         parsed_response = self.parse_weather_response(response, temp_unit, request_type)
         return parsed_response
 
@@ -97,7 +95,7 @@ class WeatherReport:
             self.__locale = f'{data["city"]}, {data["region"]}'
             self.__country = data["country"]
         except Exception as E:
-            print("  ",E)
+            print("  ", E)
             print("  Your location has been estimated and may be inaccurate.")
             self.__locale = "Castries, St Lucia"
             self.__country = "Wish I Were There"
@@ -134,6 +132,7 @@ class WeatherReport:
 
 class HolidayList:
     """ This class manages the holidays. """
+
     def __init__(self, errors, forecast):
         # self.__innerHolidays = []
         self.__errors = errors
@@ -143,29 +142,29 @@ class HolidayList:
         self.__pre_loaded_holidays = self.read_json()
         self.__forecast = forecast
         self.__forecast_dates = [_ for _ in self.__forecast.keys()]
-        
+
     def preview_holidays(self):
         print(self.__inner_holidays)
 
     def return_save_status(self):
         return self.__unsaved_holidays
-        
+
     def standard_date(self, date, year):
         actual_date = dt.datetime.strftime(
             dt.datetime.strptime(f"{date}, {year}", "%b %d, %Y"), "%Y-%m-%d"
         )
-        return actual_date     
-        
+        return actual_date
+
     def match_week_to_date(self, week_number, year):
         date_string = f"{year}-V{int(week_number)}-1"
         start_date = dt.datetime.strptime(date_string, "%G-V%V-%w").date()
         end_date = start_date + dt.timedelta(days=6.9)
-        return start_date, end_date    
-     
+        return start_date, end_date
+
     def check_for_current_week(self, date_list):
         if any((item in date_list for item in self.__forecast_dates)):
             q = "  Would you like to include available weather? (y/n) >> "
-            if input(q).lower() in ['y','yes','yeah','yea','ye']:
+            if input(q).lower() in ["y", "yes", "yeah", "yea", "ye"]:
                 return True
         return False
 
@@ -175,12 +174,12 @@ class HolidayList:
         for date in self.__inner_holidays:
             for holiday in self.__inner_holidays[date]:
                 holiday_names.append(holiday.name)
-                
+
         total_holidays = len(holiday_names)
         unique_holidays = len(set(holiday_names))
         return total_holidays, unique_holidays
 
-     def get_weather(self, date):
+    def get_weather(self, date):
         """ This function combines the weather with the data. 
         Assignment suggestions said to allow this function to query the 
         weather, but to limit the number of API calls, I am getting
@@ -189,9 +188,10 @@ class HolidayList:
         """
         # "wod" is short for "weather_on_date"
         wod = self.__forecast[date]
-        weather_string = f"> High: {wod['High']} | {wod['Forecast']} | Clouds: {wod['Cloud Cover']}"
+        weather_string = (
+            f"> High: {wod['High']} | {wod['Forecast']} | Clouds: {wod['Cloud Cover']}"
+        )
         return weather_string
-
 
     def get_month_number(self, text_month):
         # There is a better way to do this, but I'm doing it this way.
@@ -201,37 +201,38 @@ class HolidayList:
             "November": 11, "December": 12,
         }
         return month_dict[text_month]
-    
+
     def convert_dt(self, date_time, date_type):
-        if date_type == 'string':
+        if date_type == "string":
             return dt.datetime.strftime(date_time, "%Y-%m-%d")
         else:
-            return dt.datetime.strptime(date_time, '%Y-%m-%d').date()
-    
-     
+            return dt.datetime.strptime(date_time, "%Y-%m-%d").date()
+
     def scrape_holidays(self, target_year):
         """ This function holds the API call and prepares the data for use. """
-        scrape_path = (f"https://www.timeanddate.com/holidays/us/{target_year}")
+        scrape_path = f"https://www.timeanddate.com/holidays/us/{target_year}"
         raw_scrape = requests.get(scrape_path).text
         soup = BeautifulSoup(raw_scrape, "html.parser")
         holidays = self.strain_soup(soup, target_year)
-        return holidays    
-    
+        return holidays
+
     def convert_new_holidays(self, provided_holidays):
         for new_holiday in provided_holidays:
             if "category" not in new_holiday:
                 category = ["Custom Holiday"]
-                holiday_object = Holiday(new_holiday["name"], new_holiday["date"], category)
+                holiday_object = Holiday(
+                    new_holiday["name"], new_holiday["date"], category
+                )
             else:
                 category = new_holiday["category"]
-                holiday_object = Holiday(new_holiday["name"], new_holiday["date"], new_holiday['category'])
-            
+                holiday_object = Holiday(
+                    new_holiday["name"], new_holiday["date"], new_holiday["category"]
+                )
+
             self.add_holiday(holiday_object)
-            if self.__holiday_source == 'managed':
+            if self.__holiday_source == "managed":
                 self.__unsaved_holidays += 1
-        
-        
-        
+
     def add_holiday(self, holiday_object):
         # Make sure holidayObj is an Holiday Object by checking the type
         # Use innerHolidays.append(holidayObj) to add holiday
@@ -242,29 +243,23 @@ class HolidayList:
         holidate = holiday_object.date
         if holidate in self.__inner_holidays:
             self.__inner_holidays[holidate].append(holiday_object)
-            #print("Added holiday to existing date.")
+            # print("Added holiday to existing date.")
         else:
             self.__inner_holidays[holidate] = [holiday_object]
-            #print("Added holiday to a new date.")
-            
-    
-        
-    
+            # print("Added holiday to a new date.")
 
-    
-    
     def input_holiday(self):
         passed = False
         while not passed:
             print("\n  * Add a Holiday * ")
-            holiday = input('  Holiday: >> ')
+            holiday = input("  Holiday: >> ")
             holiday = "".join(_ for _ in holiday if _ in string.ascii_letters + "-'_ ")
             if len(holiday) > 2:
                 print('  "YYYY-mm-dd"')
-                holidate = input('     Date: >> ')
+                holidate = input("     Date: >> ")
                 try:
-                    holidate = dt.datetime.strptime(holidate, '%Y-%m-%d').date()
-                    pretty_date = dt.datetime.strftime(holidate, '%B %d, %Y')
+                    holidate = dt.datetime.strptime(holidate, "%Y-%m-%d").date()
+                    pretty_date = dt.datetime.strftime(holidate, "%B %d, %Y")
                     add_date = dt.datetime.strftime(holidate, "%Y-%m-%d")
                     passed = True
                 except Exception as E:
@@ -272,14 +267,14 @@ class HolidayList:
                     print(self.__errors[5])
                     delay(4)
             if passed:
-                print(f'  {holiday} on {pretty_date}')
-                passed = input('  Would you like to add this to the database? (y/n)>> ')
-                if passed.lower() in ['y','yes','yeah','ye','yep']:
-                    new_holiday = [{'name': holiday, 'date': add_date}]
+                print(f"  {holiday} on {pretty_date}")
+                passed = input("  Would you like to add this to the database? (y/n)>> ")
+                if passed.lower() in ["y", "yes", "yeah", "ye", "yep"]:
+                    new_holiday = [{"name": holiday, "date": add_date}]
                     self.convert_new_holidays(new_holiday)
                     passed = True
-                    print(f'{holiday} added successfully'.center(78, " "))
-                    
+                    print(f"{holiday} added successfully".center(78, " "))
+
     def seek_holiday(self, user_input):
         match_found = False
         possible_matches = {}
@@ -291,53 +286,51 @@ class HolidayList:
                     match_date = item.date
                     match_name = item.name
                     possible_matches[str(cntr)] = [match_date, match_name]
-                    print(f'  {str(cntr).rjust(2)}: {item.date} > {item.name}')
+                    print(f"  {str(cntr).rjust(2)}: {item.date} > {item.name}")
         if len(possible_matches) == 0:
-            print('  There were no matches found.\n')
-            return 'failed'
-        print('\n  If you want to delete one of these, enter the number.')
-        print('  A failed match will return you to the main menu.')
+            print("  There were no matches found.\n")
+            return "failed"
+        print("\n  If you want to delete one of these, enter the number.")
+        print("  A failed match will return you to the main menu.")
         choice = input("  Enter your choice: >> ")
         if choice in possible_matches:
-            print(f'  Removing {possible_matches[choice][1]} on {possible_matches[choice][0]}')
-            if input('  Proceed? (y/n) >> ').lower() in ['y','yes','yeah']:
+            print(
+                f"  Removing {possible_matches[choice][1]} on {possible_matches[choice][0]}"
+            )
+            if input("  Proceed? (y/n) >> ").lower() in ["y", "yes", "yeah"]:
                 match_found = True
         if match_found:
             return possible_matches[choice]
-        return 'passed'
-           
-                    
+        return "passed"
+
     def remove_holiday(self):
         passed = False
         while not passed:
             print('  Enter either a date ( "YYYY-mm-dd") or a holiday.')
-            user_input = input('  Find: >> ').lower()
+            user_input = input("  Find: >> ").lower()
             try:
-                date_input = dt.datetime.strptime(user_input, '%Y-%m-%d').date()
-                user_input = dt.datetime.strftime(date_input, '%Y-%m-%d')
+                date_input = dt.datetime.strptime(user_input, "%Y-%m-%d").date()
+                user_input = dt.datetime.strftime(date_input, "%Y-%m-%d")
             except:
                 passed = False
-                
+
             result = self.seek_holiday(user_input)
-            if result == 'passed':
+            if result == "passed":
                 passed = True
-            elif result == 'failed':
+            elif result == "failed":
                 passed = False
             else:
                 for item in self.__inner_holidays[result[0]]:
                     if item.name == result[1]:
                         try:
                             self.__inner_holidays[result[0]].remove(item)
-                            print('  Item Successfully Removed')
+                            print("  Item Successfully Removed")
                             self.__unsaved_holidays += 1
                             passed = True
                             delay(2)
                             break
                         except:
-                            print('  Item Removal Failed')
-                    
-
-    
+                            print("  Item Removal Failed")
 
     def read_json(self):
         """ 
@@ -346,12 +339,12 @@ class HolidayList:
         """
         try:
             if "managed_holidays.json" in os.listdir():
-                print('Welcome Back!!'.center(78," "))
+                print("Welcome Back!!".center(78, " "))
                 print("Loading Managed Holidays...".center(78, " "), "\n")
                 file = open("managed_holidays.json")
                 managed_holidays = json.load(file)["holidays"]
                 self.convert_new_holidays(managed_holidays)
-                self.__holiday_source = 'managed'
+                self.__holiday_source = "managed"
                 delay(3)
             else:
                 print("New Environment Detected".center(78, " "), "\n")
@@ -359,7 +352,7 @@ class HolidayList:
                 file = open("pre_loaded_holidays.json")
                 managed_holidays = json.load(file)["holidays"]
                 self.convert_new_holidays(managed_holidays)
-                self.__holiday_source = 'unmanaged'
+                self.__holiday_source = "unmanaged"
         except:
             print("System Environment Inconsistency".center(78, " "), "\n")
             print("Gathering Preloaded Holidays".center(78, " "), "\n")
@@ -367,31 +360,27 @@ class HolidayList:
             file = open("pre_loaded_holidays.json")
             provided_holidays = json.load(file)["holidays"]
             self.convert_new_holidays(provided_holidays)
-            self.__holiday_source = 'unmanaged'
+            self.__holiday_source = "unmanaged"
 
-            
     def save_holidays(self):
         combined = {"holidays": []}
         for year in self.__inner_holidays:
             for holiday in self.__inner_holidays[year]:
                 holiday_to_save = {
-                    'name': holiday.name,
-                    'date': holiday.date,
-                    'category': holiday.category
+                    "name": holiday.name,
+                    "date": holiday.date,
+                    "category": holiday.category,
                 }
                 combined["holidays"].append(holiday_to_save)
         print("  Storing data... please wait...".center(78, " "), "\n")
         try:
             combined_json = json.dumps(combined)
-            with open('managed_holidays.json', 'w') as file:
+            with open("managed_holidays.json", "w") as file:
                 file.write(combined_json)
                 file.close()
             self.__unsaved_holidays = 0
         except:
-            print('  Hmmm.... maybe I need a stepladder. I could not reach the shelf!.')
-
-
-    
+            print("  Hmmm.... maybe I need a stepladder. I could not reach the shelf!.")
 
     def scrape_manager(self):
         """ This function is responsible for controlling the holiday scrape. """
@@ -411,8 +400,6 @@ class HolidayList:
                 combined["holidays"].append(all_scraped[year][holiday])
         print("Merging Scraped Holidays...This may take a moment.".center(78, " "))
         self.convert_new_holidays(combined["holidays"])
-
-    
 
     def strain_soup(self, soup, target_year):
         tables = soup.find_all("table", {"class": "table"})
@@ -449,8 +436,6 @@ class HolidayList:
                 continue
         return holiday_dict
 
-    
-
     def filter_holidays_by_week(self, date_range):
         """ 
         While this function is expected to match by week number, I am matching on date.
@@ -467,12 +452,12 @@ class HolidayList:
         my data structure this late in the game.
         """
 
-        starting_date = dt.datetime.strptime(date_range[0], '%Y-%m-%d')
-        ending_date = dt.datetime.strptime(date_range[1], '%Y-%m-%d')
+        starting_date = dt.datetime.strptime(date_range[0], "%Y-%m-%d")
+        ending_date = dt.datetime.strptime(date_range[1], "%Y-%m-%d")
 
         date_list = [
-            self.convert_dt(starting_date + dt.timedelta(days = i), 'string')
-            for i in range((ending_date-starting_date).days + 1)
+            self.convert_dt(starting_date + dt.timedelta(days=i), "string")
+            for i in range((ending_date - starting_date).days + 1)
         ]
 
         days = []
@@ -482,9 +467,7 @@ class HolidayList:
             )
             days += list(filtered_by_range)
         return days, date_list
-    
-    
-    
+
     def display_week_holidays(self, date_list):
         holiday_subset, dates = self.filter_holidays_by_week(date_list)
         weather_string = ""
@@ -495,21 +478,19 @@ class HolidayList:
                 if date in [_ for _ in self.__forecast.keys()]:
                     weather_string = self.get_weather(date)
                 else:
-                    weather_string = '> Forecast is not available for this day.'
-            weekday = dt.datetime.strftime(self.convert_dt(date, 'object'), '%A')
-            print(f'  {weekday}, {date} {weather_string}')
+                    weather_string = "> Forecast is not available for this day."
+            weekday = dt.datetime.strftime(self.convert_dt(date, "object"), "%A")
+            print(f"  {weekday}, {date} {weather_string}")
             cntr = 0
             for celeb in holiday_subset:
                 if celeb[0] == date:
                     cntr += 1
                     for holiday in celeb[1]:
                         print(holiday)
-            print(" " if cntr != 0 else '  * No Holidays * \n')
-            
+            print(" " if cntr != 0 else "  * No Holidays * \n")
+
         if input(" Press Enter to Continue: >> "):
             pass
-        
-   
 
     def get_week_nums(self, year, month):
         """ This function converts year/month -> list of week numbers. """
@@ -528,14 +509,14 @@ class HolidayList:
 
     def check_month(self, month_input):
         allowed_months = [
-            'Jan', 'January', 'Feb', 'February', 'Mar', 'March', 'Apr', 
-            'April', 'May', 'May', 'Jun', 'June', 'Jul', 'July', 'Aug', 
-            'August', 'Sept', 'September', 'Oct', 'October', 'Nov', 'November', 
+            'Jan', 'January', 'Feb', 'February', 'Mar', 'March', 'Apr',
+            'April', 'May', 'May', 'Jun', 'June', 'Jul', 'July', 'Aug',
+            'August', 'Sept', 'September', 'Oct', 'October', 'Nov', 'November',
             'Dec', 'December'
         ]
         month_converter = [
-            'January', 'February', 'March', 'April', 'May', 
-            'June', 'July', 'August', 'September', 'October', 
+            'January', 'February', 'March', 'April', 'May',
+            'June', 'July', 'August', 'September', 'October',
             'November', 'December'
         ]
         if month_input.capitalize() not in allowed_months:
@@ -548,7 +529,7 @@ class HolidayList:
             else:
                 matched = allowed_months[allowed_months.index(month_input) + 1]
         return matched
-    
+
     def drill_down_to_week(self, which_month, which_year):
         month_passed = True
         month_num = self.get_month_number(which_month)
@@ -563,29 +544,25 @@ class HolidayList:
                 dates = self.match_week_to_date(week, which_year)
 
             week_dict[str(week)] = list(
-                map(lambda x: self.convert_dt(x, 'string'), [dates[0], dates[1]])
+                map(lambda x: self.convert_dt(x, "string"), [dates[0], dates[1]])
             )
 
-            dates = " to ".join(
-                str(_.month) + "-" + str(_.day) for _ in dates
-            )
+            dates = " to ".join(str(_.month) + "-" + str(_.day) for _ in dates)
             print(f"{str(week).rjust(4)}: {dates}")
         example = random.choice([_ for _ in week_dict.keys()])
-        week_choice = input(
-            f'\n  Choose a week: (i.e. "{example}") >> '
-        )
+        week_choice = input(f'\n  Choose a week: (i.e. "{example}") >> ')
         if week_choice.isnumeric() and week_choice in week_dict.keys():
             return week_dict[week_choice]
         else:
             if '"' in week_choice:
-                print(self.__errors[1])              
+                print(self.__errors[1])
                 delay(2)
             else:
                 print(self.__errors[2])
                 delay(2)
                 print(self.__errors[3])
                 delay(2)
-    
+
     def holiday_view_builder(self):
         """ This heavy function gathers user input and displays the requested view. """
         print('  Leave blank for current week. "exit" to close')
@@ -595,17 +572,18 @@ class HolidayList:
 
         if which_year.strip() == "":
             today = dt.datetime.today().date()
-            year, week_num = today.year, dt.datetime.strftime(today, '%W')
+            year, week_num = today.year, dt.datetime.strftime(today, "%W")
             week_choice = self.match_week_to_date(week_num, year)
             return list(
                 map(
-                    lambda x: self.convert_dt(x, 'string'), 
+                    lambda x: self.convert_dt(x, "string"),
                     [week_choice[0], week_choice[1]],
                 )
             )
         else:
-            year_passed = check_input(which_year, "year", [1950, 2050])
+            year_passed = check_input(which_year, "year", [2020, 2025])
             if not year_passed:
+                print(errors)
                 return False
             which_year = int(which_year)
             month_passed = False
@@ -624,7 +602,7 @@ class HolidayList:
                             )
                             week_choice = list(
                                 map(
-                                    lambda x: self.convert_dt(x, 'string'),
+                                    lambda x: self.convert_dt(x, "string"),
                                     [week_choice[0], week_choice[1]],
                                 )
                             )
@@ -640,8 +618,9 @@ class HolidayList:
                 else:
                     which_month = self.check_month(which_month)
                     if which_month:
-                        return(self.drill_down_to_week(which_month, which_year))
+                        return self.drill_down_to_week(which_month, which_year)
         # Fall-through returns None to Main Menu
+
 
 ########## END OF CLASS DECLARATIONS ##########
 ###############################################
@@ -670,28 +649,31 @@ def get_errors():
 
 # .............   MENU FUNCTIONS  .............#
 
+
 def prettify_current_menu(menu):
-    return f'  HOLIDAY MANAGER > {menu}  '.center(75,"`")
+    return f"  HOLIDAY MANAGER > {menu}  ".center(75, "`")
+
 
 def prettify_holiday_count(count, unique, save_status):
     if save_status > 0:
-        unsaved = f'| Unsaved: {save_status}'
+        unsaved = f"| Unsaved: {save_status}"
     else:
-        unsaved = ''
-    return f' {count} <- Count | Unique -> {unique} {unsaved}'.center(75,"-")
+        unsaved = ""
+    return f" {count} <- Count | Unique -> {unique} {unsaved}".center(75, "-")
+
 
 def save_menu(BoontaEve):
-    if input("  Do you want to save? (yes) >> ").lower() in ['y','yes','yeah','yea']:
+    if input("  Do you want to save? (yes) >> ").lower() in ["y", "yes", "yeah", "yea"]:
         try:
             BoontaEve.save_holidays()
-            print('  Save Succeeded')
+            print("  Save Succeeded")
         except Exception as E:
             print(E)
-            print('  Save Failed')
+            print("  Save Failed")
     else:
-        print('  Canceled without saving... Returning to main menu.')
+        print("  Canceled without saving... Returning to main menu.")
     delay(2)
-                    
+
 
 def display_menu_template(active_menu, arg_list):
     clean_screen()
@@ -711,14 +693,16 @@ def display_menu_template(active_menu, arg_list):
         )
     )
 
+
 # ............. GENERAL FUNCTIONS .............#
+
 
 def delay(duration):
     time.sleep(duration)
 
+
 def clean_screen():
     os.system(clear_term)
-    
 
 
 def modify_current_date_time():
@@ -763,6 +747,16 @@ def check_input(input_string, requirements, limits):
     return False
 
 
+def check_exit():
+    if BoontaEve.return_save_status() > 0:
+        print("  There are unsaved changes.")
+    exit = input("  Are you sure you want to exit? (yes/no) >> ").lower()
+    if exit in ["y", "yes", "yeah", "yep", "ye", "uh huh"]:
+        return True
+    return False
+
+
+# .............   ***  MAIN  ***  ............#
 
 
 def main():
@@ -780,7 +774,7 @@ def main():
     if holiday_cnt < 100:
         display_menu_template("Starting", main_args)
         BoontaEve.scrape_manager()
-        
+
         holiday_cnt, unique = BoontaEve.num_holidays()
         save_status = BoontaEve.return_save_status()
         count_disp = prettify_holiday_count(holiday_cnt, unique, save_status)
@@ -813,12 +807,13 @@ def main():
                 display_menu_template("Holiday Viewer", main_args)
                 passed = BoontaEve.holiday_view_builder()
             if type(passed) == list:
-                BoontaEve.display_week_holidays(passed)   
+                BoontaEve.display_week_holidays(passed)
             else:
-                print(passed, 'Not a list')
+                print(passed, "Not a list")
+                raise SystemExit
 
         elif main_menu_choice == 5:
-            return
+            outer_passed = check_exit()
 
 
 clean_screen()
@@ -858,6 +853,3 @@ if __name__ == "__main__":
 # and substitute the placeholders
 # for example: filetxt.format(fname = "John", age = 36)
 # This will make your code far more readable, by seperating text from code.
-
-
-
