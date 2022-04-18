@@ -11,7 +11,7 @@
   Starting Infinite Loop...
   
 ,  Eternal Exhaustion: (Error 507)
-  Wheeew, done. That was exhausting. Good thing you got a fancy processor.
+  Wheeew done. That was exhausting. Good thing you got a fancy processor.
 
 ,  Dating Problems: (Approach Error 32)
   Maybe you should try following the suggested format?

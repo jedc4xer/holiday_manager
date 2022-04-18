@@ -264,7 +264,7 @@ class HolidayList:
                     passed = True
                 except Exception as E:
                     print(E)
-                    print(self.__errors[5])
+                    print(self.__errors[4])
                     delay(4)
             if passed:
                 print(f"  {holiday} on {pretty_date}")
@@ -583,7 +583,8 @@ class HolidayList:
         else:
             year_passed = check_input(which_year, "year", [2020, 2025])
             if not year_passed:
-                print(errors)
+                print(errors[5])
+                delay(3)
                 return False
             which_year = int(which_year)
             month_passed = False
