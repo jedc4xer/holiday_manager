@@ -3,7 +3,7 @@
     
     A heat ticket for this issue has been automatically submitted.
     `````````````````````````````````````````````````````````````````
-,  Internal Error: (Error 505)
+,  External Error: (Error 505)
   Hmmm... Try leaving out the " " marks. That was just an example.
   
 ,  Eternal Exercise: (Error 506)
