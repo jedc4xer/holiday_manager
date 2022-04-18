@@ -857,8 +857,7 @@ if __name__ == "__main__":
     # Closing Sequence
     clean_screen()
     print(templates[2])
-    print("\n" * 2)
-    print("Closing the Manager".center(78, " "))
+    print(errors[6])
     delay(1.5)
     clean_screen()
     print(errors[7])
