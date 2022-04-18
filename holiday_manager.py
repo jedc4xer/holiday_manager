@@ -812,7 +812,6 @@ def check_exit(save_status):
 
 def main():
     # Get Preliminary Information
-    errors = get_errors()
     current_day_info = modify_current_date_time()
     
     # Initialize Weather
@@ -847,6 +846,7 @@ def main():
     # Return goes to exit
     
 clean_screen()
+errors = get_errors()
 templates = get_templates()
 print(templates[0])
 
